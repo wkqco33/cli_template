@@ -1,0 +1,6 @@
+[submodule "wcli"]
+	path = wcli
+	url = http://github.com/wkqco33/wcli
+[submodule "wconf"]
+	path = wconf
+	url = http://github.com/wkqco33/wconf

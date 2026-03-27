@@ -1,0 +1,13 @@
+module {{.ModuleName}}
+
+go 1.23.0
+
+require (
+	github.com/seoyc/wcli v0.0.0
+	wconf v0.0.0
+)
+
+replace (
+	github.com/seoyc/wcli => ./wcli
+	wconf => ./wconf
+)

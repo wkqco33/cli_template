@@ -1,0 +1,18 @@
+package cmd
+
+import (
+	"fmt"
+
+	"github.com/seoyc/wcli"
+)
+
+func Root() *wcli.Command {
+	return &wcli.Command{
+		Use:   "{{.ProjectName}}",
+		Short: "{{.ProjectName}} CLI",
+		Run: func(ctx *wcli.Context) error {
+			fmt.Println("Hello from {{.ProjectName}}!")
+			return nil
+		},
+	}
+}

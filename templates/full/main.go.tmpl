@@ -1,0 +1,29 @@
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/seoyc/wcli"
+	"{{.ModuleName}}/cmd"
+)
+
+const version = "0.1.0"
+
+func main() {
+	root := &wcli.Command{
+		Use:     "{{.ProjectName}}",
+		Short:   "{{.ProjectName}} CLI 도구",
+		Version: version,
+	}
+
+	root.AddCommand(
+		cmd.VersionCmd(version),
+		cmd.ExampleCmd(),
+	)
+
+	if err := root.Execute(os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
