@@ -30,11 +30,11 @@ var funcMap = template.FuncMap{
 // submodules 템플릿별로 필요한 서브모듈 목록
 var submodules = map[string][]struct{ path, url string }{
 	"minimal": {
-		{"wcli", "http://github.com/wkqco33/wcli"},
+		{"wcli", "https://github.com/wkqco33/wcli"},
 	},
 	"full": {
-		{"wcli", "http://github.com/wkqco33/wcli"},
-		{"wconf", "http://github.com/wkqco33/wconf"},
+		{"wcli", "https://github.com/wkqco33/wcli"},
+		{"wconf", "https://github.com/wkqco33/wconf"},
 	},
 }
 
