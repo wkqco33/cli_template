@@ -1,0 +1,10 @@
+package models
+
+import "gorm.io/gorm"
+
+// Example 예시 모델 - 필요에 따라 수정하세요
+type Example struct {
+	gorm.Model
+	Name        string `gorm:"not null"`
+	Description string
+}

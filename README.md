@@ -32,6 +32,10 @@ wtemp new <project-name>
 # 템플릿 지정
 wtemp new <project-name> --template minimal
 wtemp new <project-name> --template full
+
+# SQLite + GORM 추가
+wtemp new <project-name> --sqlite
+wtemp new <project-name> --sqlite --template minimal
 ```
 
 ## 템플릿 종류
@@ -68,6 +72,21 @@ my-tool/
 ├── wcli/        ← git submodule
 └── wconf/       ← git submodule
 ```
+
+### `--sqlite` 옵션
+
+어느 템플릿에든 `--sqlite` 플래그를 추가하면 GORM + SQLite 설정이 포함된다.
+
+```
+my-tool/
+├── ...
+└── database/
+    ├── db.go            ← DB 초기화 (gorm.Open, AutoMigrate)
+    └── models/
+        └── example.go   ← 예시 모델 (gorm.Model 임베드)
+```
+
+> `gorm.io/driver/sqlite`는 CGO가 필요하다. 빌드 환경에 gcc가 있어야 한다.
 
 ## 생성 후 시작하기
 
@@ -107,6 +126,7 @@ make install  # 빌드 후 ~/.local/bin 에 설치
 make release  # 전체 플랫폼 릴리스 빌드 (dist/)
 make clean    # 빌드 산출물 삭제
 make uninstall
+make help     # 사용법 출력
 ```
 
 ## 의존 라이브러리
@@ -115,3 +135,5 @@ make uninstall
 |-----------|------|
 | [wcli](https://github.com/wkqco33/wcli) | CLI 프레임워크 (커맨드 트리, 플래그, rich 출력) |
 | [wconf](https://github.com/wkqco33/wconf) | 설정 관리 (env, .env, YAML, TOML) |
+| [gorm](https://gorm.io) | ORM (`--sqlite` 옵션 시 포함) |
+| [gorm/driver/sqlite](https://github.com/go-gorm/sqlite) | SQLite 드라이버 (`--sqlite` 옵션 시 포함, CGO 필요) |

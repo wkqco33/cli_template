@@ -4,7 +4,9 @@ go 1.23.0
 
 require (
 	github.com/seoyc/wcli v0.0.0
-	wconf v0.0.0
+	wconf v0.0.0{{if .SQLite}}
+	gorm.io/driver/sqlite v1.5.5
+	gorm.io/gorm v1.25.12{{end}}
 )
 
 replace (

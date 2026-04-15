@@ -12,10 +12,17 @@ import (
 	"cli_template/templates"
 )
 
+// Options 프로젝트 생성 옵션
+type Options struct {
+	Template string
+	SQLite   bool
+}
+
 // TemplateData 템플릿 렌더링 시 주입되는 데이터
 type TemplateData struct {
 	ProjectName string
 	ModuleName  string
+	SQLite      bool
 }
 
 var validTemplates = map[string]bool{
@@ -38,10 +45,10 @@ var submodules = map[string][]struct{ path, url string }{
 	},
 }
 
-// Generate 지정한 이름과 템플릿으로 프로젝트를 생성한다
-func Generate(projectName, tmplName string) error {
-	if !validTemplates[tmplName] {
-		return fmt.Errorf("알 수 없는 템플릿: %s (사용 가능: minimal, full)", tmplName)
+// Generate 지정한 이름과 옵션으로 프로젝트를 생성한다
+func Generate(projectName string, opts Options) error {
+	if !validTemplates[opts.Template] {
+		return fmt.Errorf("알 수 없는 템플릿: %s (사용 가능: minimal, full)", opts.Template)
 	}
 
 	if _, err := os.Stat(projectName); err == nil {
@@ -51,13 +58,14 @@ func Generate(projectName, tmplName string) error {
 	data := TemplateData{
 		ProjectName: projectName,
 		ModuleName:  projectName,
+		SQLite:      opts.SQLite,
 	}
 
-	if err := renderTemplates(projectName, tmplName, data); err != nil {
+	if err := renderTemplates(projectName, opts.Template, data); err != nil {
 		return err
 	}
 
-	return initSubmodules(projectName, tmplName)
+	return initSubmodules(projectName, opts.Template)
 }
 
 func renderTemplates(projectName, tmplName string, data TemplateData) error {
@@ -67,6 +75,15 @@ func renderTemplates(projectName, tmplName string, data TemplateData) error {
 		}
 
 		relPath := strings.TrimPrefix(path, tmplName+"/")
+
+		// SQLite 옵션 없으면 database/ 디렉토리 전체 건너뜀
+		if !data.SQLite && (relPath == "database" || strings.HasPrefix(relPath, "database/")) {
+			if d.IsDir() {
+				return fs.SkipDir
+			}
+			return nil
+		}
+
 		destPath := filepath.Join(projectName, strings.TrimSuffix(relPath, ".tmpl"))
 
 		if d.IsDir() {
