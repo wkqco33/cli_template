@@ -1,10 +1,10 @@
 # {{.ProjectName}}
 
-wcli + Fyne 기반 Go GUI 앱.
+wcli + Fyne 기반 Go GUI 템플릿.
 
 ## 요구사항
 
-Fyne은 CGo와 OpenGL을 사용합니다. 빌드 전 시스템 의존성을 설치하세요:
+Fyne은 CGo와 OpenGL을 사용한다.
 
 ```bash
 # Ubuntu/Debian
@@ -17,21 +17,16 @@ xcode-select --install
 # MSYS2 + mingw-w64 설치 필요
 ```
 
-## 빌드
+## 빌드/실행
 
 ```bash
 go build -o {{.ProjectName}} .
-```
-
-## 실행
-
-```bash
 ./{{.ProjectName}}
 ```
 
 ## 설정
 
-`config.yaml` 또는 환경변수로 설정합니다.
+`config.yaml`과 환경변수(`{{.ProjectName | upper}}_` 접두사)를 함께 사용한다.
 
 | 환경변수 | 기본값 | 설명 |
 |---------|-------|------|

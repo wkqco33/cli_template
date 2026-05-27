@@ -20,7 +20,10 @@ func main() {
 		Short:   "super_cli CLI 도구",
 		Version: version,
 		PersistentPreRun: func(ctx *wcli.Context) error {
-			return cmd.InitConfig()
+			if err := cmd.InitConfig(); err != nil {
+				return err
+			}
+			return nil
 		},
 	}
 

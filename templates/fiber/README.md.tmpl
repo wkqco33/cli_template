@@ -1,6 +1,6 @@
 # {{.ProjectName}}
 
-wcli + Fiber 기반 Go 웹서버.
+wcli + Fiber 기반 Go 웹서버 템플릿.
 
 ## 빌드
 
@@ -8,19 +8,25 @@ wcli + Fiber 기반 Go 웹서버.
 go build -o {{.ProjectName}} .
 ```
 
-## 실행
+## 실행 예시
 
 ```bash
+./{{.ProjectName}} --help
 ./{{.ProjectName}} serve
 {{.ProjectName | upper}}_SERVER_PORT=9090 ./{{.ProjectName}} serve
+./{{.ProjectName}} version
+./{{.ProjectName}} completion bash > {{.ProjectName}}.bash
 ```
 
 ## 설정
+
+`config.yaml`과 환경변수(`{{.ProjectName | upper}}_` 접두사)를 함께 사용한다.
 
 | 환경변수 | 기본값 | 설명 |
 |---------|-------|------|
 | `{{.ProjectName | upper}}_SERVER_HOST` | `0.0.0.0` | 서버 호스트 |
 | `{{.ProjectName | upper}}_SERVER_PORT` | `8080` | 서버 포트 |
+| `{{.ProjectName | upper}}_LOG_LEVEL` | `info` | 로그 레벨 |
 {{- if .SQLite}}
 | `{{.ProjectName | upper}}_DATABASE_PATH` | `{{.ProjectName}}.db` | SQLite DB 경로 |
 {{- end}}

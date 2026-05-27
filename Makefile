@@ -9,21 +9,27 @@ PLATFORMS := linux_amd64 linux_arm64 darwin_amd64 darwin_arm64 windows_amd64
 all: build
 
 # wtemp 사용법 출력
-# --sqlite 옵션은 생성된 프로젝트에 GORM + SQLite를 추가함 (CGO 필요)
+# --sqlite 옵션은 일부 템플릿(minimal/full/gin/fiber/echo)에만 반영됨 (CGO 필요)
 help:
-	@echo "사용법: wtemp new <project-name> [options]"
+	@echo "사용법: wtemp <command> [options]"
 	@echo ""
-	@echo "옵션:"
-	@echo "  -t, --template  minimal | full    템플릿 선택 (기본값: full)"
-	@echo "      --sqlite                       SQLite + GORM 지원 추가"
+	@echo "주요 명령:"
+	@echo "  wtemp list"
+	@echo "  wtemp new <project-name> [options]"
+	@echo ""
+	@echo "옵션 (new 명령):"
+	@echo "  -t, --template                  템플릿 선택 (기본값: full, 아래 목록 참고)"
+	@echo "      --sqlite                   SQLite + GORM 추가 (minimal/full/gin/fiber/echo)"
+	@echo ""
+	@echo "템플릿 목록 (wtemp list 기준):"
+	@go run . list
 	@echo ""
 	@echo "예시:"
 	@echo "  wtemp new my-app"
 	@echo "  wtemp new my-app -t minimal"
-	@echo "  wtemp new my-app --sqlite"
-	@echo "  wtemp new my-app --sqlite -t minimal"
+	@echo "  wtemp new my-app --sqlite -t gin"
 	@echo ""
-	@echo "  참고: --sqlite 옵션으로 생성된 프로젝트는 CGO(gcc)가 필요합니다."
+	@echo "주의: --sqlite 옵션으로 생성된 프로젝트는 CGO(gcc)가 필요합니다."
 	@echo ""
 	@echo "Makefile 타겟:"
 	@echo "  build     현재 플랫폼용 빌드"

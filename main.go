@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/seoyc/wcli"
 	"cli_template/cmd"
+	"github.com/seoyc/wcli"
 )
 
 const version = "0.1.0"

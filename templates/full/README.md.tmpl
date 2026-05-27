@@ -1,6 +1,6 @@
 # {{.ProjectName}}
 
-wcli 기반 Go CLI 프로젝트.
+wcli 기반 Go CLI 템플릿.
 
 ## 빌드
 
@@ -8,20 +8,23 @@ wcli 기반 Go CLI 프로젝트.
 go build -o {{.ProjectName}} .
 ```
 
-## 사용법
+## 실행 예시
 
 ```bash
 ./{{.ProjectName}} --help
 ./{{.ProjectName}} version
+./{{.ProjectName}} example --name foo
 ./{{.ProjectName}} example --name foo --verbose
+./{{.ProjectName}} completion bash > {{.ProjectName}}.bash
 ```
 
 ## 설정
 
-`config.yaml` 또는 환경변수로 설정합니다.
+`config.yaml`과 환경변수(`{{.ProjectName | upper}}_` 접두사)를 함께 사용한다.
 
 | 환경변수 | 기본값 | 설명 |
 |---------|-------|------|
+| `{{.ProjectName | upper}}_NAME` | `{{.ProjectName}}` | 앱 이름 |
 | `{{.ProjectName | upper}}_SERVER_HOST` | `0.0.0.0` | 서버 호스트 |
 | `{{.ProjectName | upper}}_SERVER_PORT` | `8080` | 서버 포트 |
 | `{{.ProjectName | upper}}_LOG_LEVEL` | `info` | 로그 레벨 |

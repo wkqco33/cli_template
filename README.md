@@ -1,8 +1,6 @@
 # wtemp
 
-`wcli` + `wconf` 기반 Go CLI 프로젝트 템플릿 생성기.
-
-새 프로젝트를 시작할 때 보일러플레이트 설정 없이 바로 기능 구현에 집중할 수 있도록 프로젝트 골격을 자동으로 생성해준다.
+wcli 기반 Go CLI 프로젝트 템플릿 생성기.
 
 ## 설치
 
@@ -20,75 +18,60 @@ cd cli_template
 make install
 ```
 
+## 기본 확인 명령
+
+```bash
+go run . --help
+go run . list
+make help
+```
+
 ## 사용법
 
 ```bash
-# 템플릿 목록 확인
+# 템플릿 목록
 wtemp list
 
-# 새 프로젝트 생성 (기본: full 템플릿)
+# 프로젝트 생성 (기본 템플릿: full)
 wtemp new <project-name>
 
 # 템플릿 지정
-wtemp new <project-name> --template minimal
-wtemp new <project-name> --template full
+wtemp new <project-name> -t minimal
+wtemp new <project-name> --template gin
 
-# SQLite + GORM 추가
+# SQLite + GORM 포함 생성
 wtemp new <project-name> --sqlite
-wtemp new <project-name> --sqlite --template minimal
+wtemp new <project-name> --sqlite -t gin
+
+# 생성 단계별 성능 측정
+wtemp new <project-name> -t library --profile
 ```
 
-## 템플릿 종류
+`--profile`를 사용하면 생성 단계 시간(`render`, `git`, `postprocess`, `total`)이 stderr로 출력된다.
 
-### `minimal`
+## 템플릿 목록
 
-루트 커맨드 하나만 있는 최소 구조. 단순한 CLI 도구에 적합.
+템플릿 이름/설명의 기준은 `wtemp list` 출력이다.
 
-```
-my-tool/
-├── go.mod
-├── main.go
-└── cmd/
-│   └── root.go
-├── wcli/        ← git submodule
-```
+현재 출력:
 
-### `full`
-
-서브커맨드, wconf 설정 관리, 로깅 구조가 포함된 전체 구조. 실제 서비스 수준의 CLI 도구에 적합.
-
-```
-my-tool/
-├── go.mod
-├── main.go
-├── config.yaml
-├── README.md
-├── cmd/
-│   ├── root.go
-│   ├── version.go
-│   └── example.go
-├── config/
-│   └── config.go
-├── wcli/        ← git submodule
-└── wconf/       ← git submodule
+```text
+minimal      루트 커맨드만 있는 최소 구조
+full         서브커맨드 + wcli 설정이 포함된 전체 구조
+gin          CLI + Gin 웹서버 (REST API 스켈레톤)
+fiber        CLI + Fiber 웹서버 (REST API 스켈레톤)
+echo         CLI + Echo 웹서버 (REST API 스켈레톤)
+fyne         CLI + Fyne GUI 앱
+library      Go 라이브러리 스켈레톤
 ```
 
-### `--sqlite` 옵션
+## `--sqlite` 옵션
 
-어느 템플릿에든 `--sqlite` 플래그를 추가하면 GORM + SQLite 설정이 포함된다.
+- `--sqlite`는 `minimal`, `full`, `gin`, `fiber`, `echo` 템플릿에서만 실제 코드/의존성에 반영된다.
+- `fyne`, `library` 템플릿에서는 현재 변경 사항이 없다.
+- SQLite 드라이버(`gorm.io/driver/sqlite`)는 CGO가 필요하므로 `gcc`가 설치되어 있어야 한다.
 
-```
-my-tool/
-├── ...
-└── database/
-    ├── db.go            ← DB 초기화 (gorm.Open, AutoMigrate)
-    └── models/
-        └── example.go   ← 예시 모델 (gorm.Model 임베드)
-```
-
-> `gorm.io/driver/sqlite`는 CGO가 필요하다. 빌드 환경에 gcc가 있어야 한다.
-
-## 생성 후 시작하기
+## 생성 후 시작
 
 ```bash
 wtemp new my-tool
@@ -98,25 +81,7 @@ go build .
 ./my-tool --help
 ```
 
-`wcli`, `wconf`는 프로젝트 생성 시 git submodule로 자동 추가된다.
-
-## 설정 (full 템플릿)
-
-`config.yaml` 또는 환경변수로 설정을 관리한다. 환경변수는 `{프로젝트명 대문자}_` 접두사를 사용한다.
-
-```yaml
-# config.yaml
-name: my-tool
-server:
-  host: 0.0.0.0
-  port: 8080
-log:
-  level: info
-```
-
-```bash
-MY_TOOL_SERVER_PORT=9090 ./my-tool example
-```
+생성된 프로젝트에는 `wcli`가 git submodule로 자동 추가된다.
 
 ## 빌드
 
@@ -129,11 +94,25 @@ make uninstall
 make help     # 사용법 출력
 ```
 
-## 의존 라이브러리
+## 스모크 검증
 
-| 라이브러리 | 역할 |
-|-----------|------|
-| [wcli](https://github.com/wkqco33/wcli) | CLI 프레임워크 (커맨드 트리, 플래그, rich 출력) |
-| [wconf](https://github.com/wkqco33/wconf) | 설정 관리 (env, .env, YAML, TOML) |
-| [gorm](https://gorm.io) | ORM (`--sqlite` 옵션 시 포함) |
-| [gorm/driver/sqlite](https://github.com/go-gorm/sqlite) | SQLite 드라이버 (`--sqlite` 옵션 시 포함, CGO 필요) |
+핵심 템플릿 생성 후 `go build ./...` 컴파일 가능 여부를 자동 검증한다.
+
+- 커버리지: `minimal/full` 기본 + sqlite on/off, `gin` 기본, `library` 기본
+- sqlite 케이스는 `CGO_ENABLED=0`, `gcc` 미설치, windows 환경에서 skip 사유를 명시
+- 각 케이스는 `t.TempDir()`를 사용해 생성 산출물을 자동 정리
+
+```bash
+go test -tags=smoke ./generator -run TestSmokeGeneratedTemplatesBuild -count=1
+```
+
+## 성능 측정 재현(로컬 기준)
+
+네트워크 편차를 줄이기 위해 서브모듈이 없는 `library` 템플릿으로 측정한다.
+
+```bash
+go build -o ./wtemp .
+for i in $(seq 1 5); do
+  ./wtemp new "perf-lib-$i" -t library --profile >/dev/null
+done
+```

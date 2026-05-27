@@ -2,9 +2,6 @@ package cmd
 
 import (
 	"fmt"
-{{- if .SQLite}}
-	"errors"
-{{- end}}
 
 	"github.com/seoyc/wcli"
 	"github.com/seoyc/wcli/rich"
@@ -36,12 +33,14 @@ func ExampleCmd() *wcli.Command {
 			if name == "" {
 				item.Name = "default"
 			}
-			if err := database.DB.Create(&item).Error; err != nil && !errors.Is(err, nil) {
-				rich.Println("[yellow]DB 오류:[/yellow] %v", err)
+			if err := database.DB.Create(&item).Error; err != nil {
+				return fmt.Errorf("예시 데이터 저장 실패: %w", err)
 			}
 
 			var items []models.Example
-			database.DB.Find(&items)
+			if err := database.DB.Find(&items).Error; err != nil {
+				return fmt.Errorf("예시 데이터 조회 실패: %w", err)
+			}
 			rich.Println("[cyan]DB 레코드 목록:[/cyan]")
 			for _, v := range items {
 				fmt.Printf("  [%d] %s — %s\n", v.ID, v.Name, v.Description)

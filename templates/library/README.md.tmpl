@@ -1,6 +1,6 @@
 # {{.ProjectName}}
 
-Go 라이브러리.
+Go 라이브러리 템플릿.
 
 ## 설치
 
@@ -8,12 +8,12 @@ Go 라이브러리.
 go get github.com/{{.ModuleName}}
 ```
 
-## 사용법
+## 사용 예시
 
 ```go
-import "github.com/{{.ModuleName}}"
+import lib "github.com/{{.ModuleName}}"
 
-msg := {{.ProjectName}}.Hello("Go")
+msg := lib.Hello("Go")
 fmt.Println(msg) // Hello, Go!
 ```
 
