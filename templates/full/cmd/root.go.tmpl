@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"{{.ModuleName}}/config"
-	"github.com/seoyc/wcli"
+	wcliconfig "github.com/seoyc/wcli/config"
 )
 
 var cfg config.Config
@@ -14,9 +14,9 @@ func Cfg() *config.Config {
 
 // InitConfig wcli로 설정을 로드한다. root의 PersistentPreRun에서 호출.
 func InitConfig() error {
-	return wcli.Load(&cfg,
-		wcli.WithFiles("config.yaml"),
-		wcli.WithEnv(),
-		wcli.WithPrefix("{{.ProjectName | upper}}"),
+	return wcliconfig.Load(&cfg,
+		wcliconfig.WithFiles("config.yaml"),
+		wcliconfig.WithEnv(),
+		wcliconfig.WithPrefix("{{.ProjectName | upper}}"),
 	)
 }
