@@ -1,0 +1,23 @@
+package {{.ProjectName | pkgname}}_test
+
+import (
+	"testing"
+
+	{{.ProjectName | pkgname}} "github.com/{{.ModuleName}}"
+)
+
+func TestHello(t *testing.T) {
+	got := {{.ProjectName | pkgname}}.Hello("Go")
+	want := "Hello, Go!"
+	if got != want {
+		t.Errorf("Hello() = %q, want %q", got, want)
+	}
+}
+
+func TestHelloEmpty(t *testing.T) {
+	got := {{.ProjectName | pkgname}}.Hello("")
+	want := "Hello, World!"
+	if got != want {
+		t.Errorf("Hello(\"\") = %q, want %q", got, want)
+	}
+}

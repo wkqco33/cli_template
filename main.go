@@ -13,7 +13,7 @@ const version = "0.1.0"
 func main() {
 	root := &wcli.Command{
 		Use:     "wtemp",
-		Short:   "wcli + wconf 기반 Go CLI 프로젝트 템플릿 생성기",
+		Short:   "wcli 기반 Go CLI 프로젝트 템플릿 생성기",
 		Version: version,
 	}
 

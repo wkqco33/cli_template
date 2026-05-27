@@ -1,0 +1,10 @@
+package config
+
+// Config 애플리케이션 설정 구조체
+type Config struct {
+	App struct {
+		Title  string `wcli:"TITLE" default:"{{.ProjectName}}"`
+		Width  int    `wcli:"WIDTH" default:"800"`
+		Height int    `wcli:"HEIGHT" default:"600"`
+	} `wcli:"APP"`
+}

@@ -15,7 +15,7 @@ func NewCmd() *wcli.Command {
 	cmd := &wcli.Command{
 		Use:   "new <project-name>",
 		Short: "새 CLI 프로젝트를 생성합니다",
-		Long:  "지정한 이름으로 wcli + wconf 기반 Go CLI 프로젝트를 생성합니다.",
+		Long:  "지정한 이름으로 wcli 기반 Go CLI 프로젝트를 생성합니다.",
 		Run: func(ctx *wcli.Context) error {
 			if len(ctx.Args) == 0 {
 				return fmt.Errorf("프로젝트 이름을 입력하세요: new <project-name>")
@@ -31,7 +31,7 @@ func NewCmd() *wcli.Command {
 
 			rich.Println("[green][bold]완료![/bold][/green] %s 프로젝트가 생성되었습니다.", projectName)
 			fmt.Printf("\n  cd %s\n  go mod tidy\n  go build .\n\n", projectName)
-			rich.Println("[dim]wcli, wconf 서브모듈이 자동으로 추가되었습니다.[/dim]")
+			rich.Println("[dim]wcli 서브모듈이 자동으로 추가되었습니다.[/dim]")
 			if sqlite {
 				rich.Println("[dim]SQLite + GORM이 포함되었습니다. database/ 디렉토리를 확인하세요.[/dim]")
 			}
@@ -39,7 +39,7 @@ func NewCmd() *wcli.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&tmplName, "template", "t", "full", "사용할 템플릿 (minimal, full)")
+	cmd.Flags().StringVar(&tmplName, "template", "t", "full", "사용할 템플릿 (minimal, full, gin, fiber, echo, fyne, library)")
 	cmd.Flags().BoolVar(&sqlite, "sqlite", "", false, "SQLite + GORM 지원 추가")
 	return cmd
 }

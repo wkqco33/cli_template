@@ -4,3 +4,7 @@ server:
   port: 8080
 log:
   level: info
+{{- if .SQLite}}
+database:
+  path: {{.ProjectName}}.db
+{{- end}}

@@ -1,0 +1,37 @@
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/seoyc/wcli"
+	"github.com/seoyc/wcli/logging"
+	"{{.ModuleName}}/cmd"
+)
+
+const version = "0.1.0"
+
+func main() {
+	logger := logging.NewDefaultLogger(os.Stderr, logging.LevelInfo, true)
+	logging.SetLogger(logger)
+
+	root := &wcli.Command{
+		Use:     "{{.ProjectName}}",
+		Short:   "{{.ProjectName}} 서버",
+		Version: version,
+		PersistentPreRun: func(ctx *wcli.Context) error {
+			return cmd.InitConfig()
+		},
+	}
+
+	root.AddCommand(
+		cmd.ServeCmd(),
+		cmd.VersionCmd(version),
+		wcli.NewCompletionCommand(root),
+	)
+
+	if err := root.Execute(os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}

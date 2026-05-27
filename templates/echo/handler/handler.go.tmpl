@@ -1,0 +1,55 @@
+package handler
+
+import (
+	"net/http"
+{{- if .SQLite}}
+	"strconv"
+{{- end}}
+
+	"github.com/labstack/echo/v4"
+{{- if .SQLite}}
+	"{{.ModuleName}}/database"
+	"{{.ModuleName}}/database/models"
+{{- end}}
+)
+
+// Hello GET /hello
+func Hello(c echo.Context) error {
+	return c.JSON(http.StatusOK, map[string]string{"message": "Hello from {{.ProjectName}}!"})
+}
+
+{{- if .SQLite}}
+
+// ListExamples GET /examples
+func ListExamples(c echo.Context) error {
+	var items []models.Example
+	if err := database.DB.Find(&items).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, items)
+}
+
+// CreateExample POST /examples
+func CreateExample(c echo.Context) error {
+	var item models.Example
+	if err := c.Bind(&item); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+	if err := database.DB.Create(&item).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusCreated, item)
+}
+
+// DeleteExample DELETE /examples/:id
+func DeleteExample(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
+	}
+	if err := database.DB.Delete(&models.Example{}, id).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, map[string]int{"deleted": id})
+}
+{{- end}}

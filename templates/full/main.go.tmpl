@@ -5,21 +5,39 @@ import (
 	"os"
 
 	"github.com/seoyc/wcli"
+	"github.com/seoyc/wcli/logging"
 	"{{.ModuleName}}/cmd"
+{{- if .SQLite}}
+	"{{.ModuleName}}/database"
+{{- end}}
 )
 
 const version = "0.1.0"
 
 func main() {
+	logger := logging.NewDefaultLogger(os.Stderr, logging.LevelInfo, true)
+	logging.SetLogger(logger)
+
 	root := &wcli.Command{
 		Use:     "{{.ProjectName}}",
 		Short:   "{{.ProjectName}} CLI 도구",
 		Version: version,
+		PersistentPreRun: func(ctx *wcli.Context) error {
+			if err := cmd.InitConfig(); err != nil {
+				return err
+			}
+{{- if .SQLite}}
+			return database.Init(cmd.Cfg().Database.Path)
+{{- else}}
+			return nil
+{{- end}}
+		},
 	}
 
 	root.AddCommand(
 		cmd.VersionCmd(version),
 		cmd.ExampleCmd(),
+		wcli.NewCompletionCommand(root),
 	)
 
 	if err := root.Execute(os.Args[1:]); err != nil {

@@ -14,9 +14,6 @@ func ExampleCmd() *wcli.Command {
 	cmd := &wcli.Command{
 		Use:   "example",
 		Short: "예시 커맨드",
-		PreRun: func(ctx *wcli.Context) error {
-			return initConfig()
-		},
 		Run: func(ctx *wcli.Context) error {
 			rich.Println("[green]실행 중:[/green] example 커맨드")
 			if name != "" {

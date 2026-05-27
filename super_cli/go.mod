@@ -1,13 +1,7 @@
 module super_cli
 
-go 1.23.0
+go 1.26.1
 
-require (
-	github.com/seoyc/wcli v0.0.0
-	wconf v0.0.0
-)
+require github.com/seoyc/wcli v0.0.0
 
-replace (
-	github.com/seoyc/wcli => ../wcli
-	wconf => ../wconf
-)
+replace github.com/seoyc/wcli => ../wcli

@@ -1,0 +1,22 @@
+package main
+
+import (
+	"fyne.io/fyne/v2/app"
+	"github.com/seoyc/wcli"
+	"{{.ModuleName}}/config"
+	"{{.ModuleName}}/ui"
+)
+
+func main() {
+	// CLI 설정 로드 (환경변수 및 config.yaml 지원)
+	var cfg config.Config
+	_ = wcli.Load(&cfg,
+		wcli.WithFiles("config.yaml"),
+		wcli.WithEnv(),
+		wcli.WithPrefix("{{.ProjectName | upper}}"),
+	)
+
+	a := app.New()
+	w := ui.NewMainWindow(a, &cfg)
+	w.ShowAndRun()
+}

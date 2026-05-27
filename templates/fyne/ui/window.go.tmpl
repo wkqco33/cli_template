@@ -1,0 +1,29 @@
+package ui
+
+import (
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
+	"{{.ModuleName}}/config"
+)
+
+// NewMainWindow 메인 윈도우를 생성하고 반환한다
+func NewMainWindow(a fyne.App, cfg *config.Config) fyne.Window {
+	w := a.NewWindow(cfg.App.Title)
+	w.Resize(fyne.NewSize(float32(cfg.App.Width), float32(cfg.App.Height)))
+
+	label := widget.NewLabel("{{.ProjectName}}에 오신 걸 환영합니다!")
+	label.Alignment = fyne.TextAlignCenter
+
+	btn := widget.NewButton("클릭하세요", func() {
+		label.SetText("버튼이 클릭되었습니다!")
+	})
+
+	content := container.NewVBox(
+		label,
+		btn,
+	)
+
+	w.SetContent(content)
+	return w
+}

@@ -1,0 +1,11 @@
+// Package {{.ProjectName | pkgname}} provides ...
+package {{.ProjectName | pkgname}}
+
+// Hello returns a greeting string.
+// Replace with your library's actual logic.
+func Hello(name string) string {
+	if name == "" {
+		name = "World"
+	}
+	return "Hello, " + name + "!"
+}

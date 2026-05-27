@@ -28,10 +28,16 @@ type TemplateData struct {
 var validTemplates = map[string]bool{
 	"minimal": true,
 	"full":    true,
+	"gin":     true,
+	"fiber":   true,
+	"echo":    true,
+	"fyne":    true,
+	"library": true,
 }
 
 var funcMap = template.FuncMap{
-	"upper": strings.ToUpper,
+	"upper":   strings.ToUpper,
+	"pkgname": func(s string) string { return strings.ReplaceAll(s, "-", "_") },
 }
 
 // submodules 템플릿별로 필요한 서브모듈 목록
@@ -41,14 +47,31 @@ var submodules = map[string][]struct{ path, url string }{
 	},
 	"full": {
 		{"wcli", "https://github.com/wkqco33/wcli"},
-		{"wconf", "https://github.com/wkqco33/wconf"},
 	},
+	"gin": {
+		{"wcli", "https://github.com/wkqco33/wcli"},
+	},
+	"fiber": {
+		{"wcli", "https://github.com/wkqco33/wcli"},
+	},
+	"echo": {
+		{"wcli", "https://github.com/wkqco33/wcli"},
+	},
+	"fyne": {
+		{"wcli", "https://github.com/wkqco33/wcli"},
+	},
+	"library": {}, // 서브모듈 없음
+}
+
+// validTemplateNames Generate 에러 메시지용 이름 목록
+func validTemplateNames() string {
+	return "minimal, full, gin, fiber, echo, fyne, library"
 }
 
 // Generate 지정한 이름과 옵션으로 프로젝트를 생성한다
 func Generate(projectName string, opts Options) error {
 	if !validTemplates[opts.Template] {
-		return fmt.Errorf("알 수 없는 템플릿: %s (사용 가능: minimal, full)", opts.Template)
+		return fmt.Errorf("알 수 없는 템플릿: %s (사용 가능: %s)", opts.Template, validTemplateNames())
 	}
 
 	if _, err := os.Stat(projectName); err == nil {
@@ -100,7 +123,7 @@ func renderTemplates(projectName, tmplName string, data TemplateData) error {
 // initSubmodules git init 후 필요한 서브모듈을 추가한다
 func initSubmodules(projectName, tmplName string) error {
 	if _, err := exec.LookPath("git"); err != nil {
-		return fmt.Errorf("git을 찾을 수 없습니다. git을 설치하거나 wcli/wconf를 수동으로 추가하세요")
+		return fmt.Errorf("git을 찾을 수 없습니다. git을 설치하거나 wcli를 수동으로 추가하세요")
 	}
 
 	run := func(args ...string) error {

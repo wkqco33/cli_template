@@ -2,9 +2,16 @@ package cmd
 
 import (
 	"fmt"
+{{- if .SQLite}}
+	"errors"
+{{- end}}
 
 	"github.com/seoyc/wcli"
 	"github.com/seoyc/wcli/rich"
+{{- if .SQLite}}
+	"{{.ModuleName}}/database"
+	"{{.ModuleName}}/database/models"
+{{- end}}
 )
 
 func ExampleCmd() *wcli.Command {
@@ -14,9 +21,6 @@ func ExampleCmd() *wcli.Command {
 	cmd := &wcli.Command{
 		Use:   "example",
 		Short: "예시 커맨드",
-		PreRun: func(ctx *wcli.Context) error {
-			return initConfig()
-		},
 		Run: func(ctx *wcli.Context) error {
 			rich.Println("[green]실행 중:[/green] example 커맨드")
 			if name != "" {
@@ -25,6 +29,24 @@ func ExampleCmd() *wcli.Command {
 			if verbose {
 				fmt.Printf("설정: %+v\n", cfg)
 			}
+{{- if .SQLite}}
+
+			// DB에 Example 레코드 추가 후 조회
+			item := models.Example{Name: name, Description: "example 커맨드로 생성"}
+			if name == "" {
+				item.Name = "default"
+			}
+			if err := database.DB.Create(&item).Error; err != nil && !errors.Is(err, nil) {
+				rich.Println("[yellow]DB 오류:[/yellow] %v", err)
+			}
+
+			var items []models.Example
+			database.DB.Find(&items)
+			rich.Println("[cyan]DB 레코드 목록:[/cyan]")
+			for _, v := range items {
+				fmt.Printf("  [%d] %s — %s\n", v.ID, v.Name, v.Description)
+			}
+{{- end}}
 			return nil
 		},
 	}

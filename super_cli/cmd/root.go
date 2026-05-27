@@ -2,16 +2,16 @@ package cmd
 
 import (
 	"super_cli/config"
-	"wconf"
+	"github.com/seoyc/wcli"
 )
 
 var cfg config.Config
 
-// initConfig wconf로 설정을 로드한다. PersistentPreRun에서 호출.
-func initConfig() error {
-	return wconf.Load(&cfg,
-		wconf.WithFiles("config.yaml"),
-		wconf.WithEnv(),
-		wconf.WithPrefix("SUPER_CLI"),
+// InitConfig wcli로 설정을 로드한다. root의 PersistentPreRun에서 호출.
+func InitConfig() error {
+	return wcli.Load(&cfg,
+		wcli.WithFiles("config.yaml"),
+		wcli.WithEnv(),
+		wcli.WithPrefix("SUPER_CLI"),
 	)
 }

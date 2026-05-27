@@ -1,0 +1,12 @@
+package main
+
+import (
+	"fmt"
+
+	{{.ProjectName | pkgname}} "github.com/{{.ModuleName}}"
+)
+
+func main() {
+	msg := {{.ProjectName | pkgname}}.Hello("Go")
+	fmt.Println(msg)
+}
