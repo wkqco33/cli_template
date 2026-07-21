@@ -1,16 +1,13 @@
-name: Release
+name: CI
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [master]
+  pull_request:
 
 jobs:
-  release:
+  test:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,10 +25,11 @@ jobs:
         with:
           repo-token: ${{ github.token }}
 
-      - name: Build release artifacts
-        run: task release
+      - name: Build
+        run: task build
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*
+      - name: Unit tests
+        run: task test
+
+      - name: Smoke build tests (generated templates compile)
+        run: task smoke

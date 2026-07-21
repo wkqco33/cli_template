@@ -24,6 +24,11 @@
 # Go workspace file
 go.work
 
+### Project ###
+# wtemp 빌드 산출물 (task build / task release)
+/wtemp
+/dist/
+
 ### Linux ###
 *~
 

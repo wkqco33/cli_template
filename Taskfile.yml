@@ -1,0 +1,107 @@
+version: '3'
+
+vars:
+  BIN: wtemp
+  DIST: dist
+  PLATFORMS: linux_amd64 linux_arm64 darwin_amd64 darwin_arm64 windows_amd64
+  INSTALL_DIR:
+    sh: echo "$HOME/.local/bin"
+
+tasks:
+  default:
+    desc: 사용 가능한 태스크 목록 출력
+    silent: true
+    cmds:
+      - task --list
+
+  # --- 빌드 ---
+
+  build:
+    desc: 현재 플랫폼용 빌드
+    cmds:
+      - go build -o {{.BIN}} .
+
+  release:
+    desc: 전체 플랫폼 릴리스 빌드 (dist/)
+    cmds:
+      - task: clean
+      - mkdir -p {{.DIST}}
+      - |
+        set -e
+        for target in {{.PLATFORMS}}; do
+          os="${target%_*}"
+          arch="${target#*_}"
+          out="{{.DIST}}/{{.BIN}}_${target}"
+          if [ "$os" = "windows" ]; then
+            GOOS="$os" GOARCH="$arch" go build -o "${out}.exe" .
+            (cd {{.DIST}} && zip "{{.BIN}}_${target}.zip" "{{.BIN}}_${target}.exe" && rm "{{.BIN}}_${target}.exe")
+          else
+            GOOS="$os" GOARCH="$arch" go build -o "${out}" .
+            tar -czf "${out}.tar.gz" -C {{.DIST}} "{{.BIN}}_${target}"
+            rm "${out}"
+          fi
+        done
+      - 'echo "릴리스 완료: {{.DIST}}/"'
+      - ls -lh {{.DIST}}/
+
+  clean:
+    desc: 빌드 산출물 삭제
+    cmds:
+      - rm -f {{.BIN}}
+      - rm -rf {{.DIST}}
+
+  # --- 테스트 ---
+
+  test:
+    desc: 단위 테스트 실행
+    cmds:
+      - go test ./...
+
+  smoke:
+    desc: 생성된 템플릿의 go build 검증 (-tags=smoke)
+    cmds:
+      - go test -tags=smoke ./generator -run TestSmokeGeneratedTemplatesBuild -count=1
+
+  # --- 설치 / 삭제 ---
+
+  install:
+    desc: 빌드 후 ~/.local/bin 에 설치
+    cmds:
+      - task: build
+      - cp {{.BIN}} {{.INSTALL_DIR}}/{{.BIN}}
+      - 'echo "설치 완료: {{.INSTALL_DIR}}/{{.BIN}}"'
+
+  uninstall:
+    desc: ~/.local/bin 에서 설치된 바이너리 제거
+    cmds:
+      - rm -f {{.INSTALL_DIR}}/{{.BIN}}
+      - 'echo "삭제 완료: {{.INSTALL_DIR}}/{{.BIN}}"'
+
+  # --- 사용법 ---
+
+  help:
+    desc: wtemp 사용법 출력
+    silent: true
+    cmds:
+      - |
+        echo "사용법: wtemp <command> [options]"
+        echo ""
+        echo "주요 명령:"
+        echo "  wtemp list"
+        echo "  wtemp new <project-name> [options]"
+        echo ""
+        echo "옵션 (new 명령):"
+        echo "  -t, --template                  템플릿 선택 (기본값: full, 아래 목록 참고)"
+        echo "      --sqlite                   SQLite + GORM 추가 (minimal/full/gin/fiber/echo)"
+        echo ""
+        echo "템플릿 목록 (wtemp list 기준):"
+        go run . list
+        echo ""
+        echo "예시:"
+        echo "  wtemp new my-app"
+        echo "  wtemp new my-app -t minimal"
+        echo "  wtemp new my-app --sqlite -t gin"
+        echo ""
+        echo "주의: --sqlite 옵션으로 생성된 프로젝트는 CGO(gcc)가 필요합니다."
+        echo ""
+        echo "Task 목록: task --list"

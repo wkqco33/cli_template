@@ -23,6 +23,10 @@ func NewCmd() *wcli.Command {
 			}
 			projectName := ctx.Args[0]
 
+			if err := generator.ValidateProjectAndModuleName(projectName, projectName); err != nil {
+				return err
+			}
+
 			rich.Println("[cyan]생성 중:[/cyan] %s (템플릿: %s)", projectName, tmplName)
 
 			opts := generator.Options{Template: tmplName, SQLite: sqlite, Profile: profile}

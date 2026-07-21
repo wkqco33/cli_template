@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 {{- if .SQLite}}
+	"github.com/seoyc/wcli/logging"
 	"{{.ModuleName}}/database"
 	"{{.ModuleName}}/database/models"
 {{- end}}
@@ -23,7 +24,8 @@ func Hello(c *fiber.Ctx) error {
 func ListExamples(c *fiber.Ctx) error {
 	var items []models.Example
 	if err := database.DB.Find(&items).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		logging.GetLogger().Log(logging.LevelError, "examples 조회 실패: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
 	}
 	return c.JSON(items)
 }
@@ -35,7 +37,8 @@ func CreateExample(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 	if err := database.DB.Create(&item).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		logging.GetLogger().Log(logging.LevelError, "example 생성 실패: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
 	}
 	return c.Status(fiber.StatusCreated).JSON(item)
 }
@@ -47,7 +50,8 @@ func DeleteExample(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid id"})
 	}
 	if err := database.DB.Delete(&models.Example{}, id).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		logging.GetLogger().Log(logging.LevelError, "example 삭제 실패 (id=%d): %v", id, err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
 	}
 	return c.JSON(fiber.Map{"deleted": id})
 }

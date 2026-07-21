@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/seoyc/wcli"
 	"github.com/seoyc/wcli/logging"
 	"{{.ModuleName}}/handler"
@@ -26,6 +27,7 @@ func ServeCmd() *wcli.Command {
 			logging.GetLogger().Log(logging.LevelInfo, "서버 시작: http://%s", addr)
 
 			app := fiber.New()
+			app.Use(recover.New())
 			app.Get("/hello", handler.Hello)
 {{- if .SQLite}}
 			app.Get("/examples", handler.ListExamples)

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/seoyc/wcli"
 	"github.com/seoyc/wcli/logging"
@@ -11,16 +12,31 @@ import (
 
 const version = "0.1.0"
 
-func main() {
-	logger := logging.NewDefaultLogger(os.Stderr, logging.LevelInfo, true)
-	logging.SetLogger(logger)
+// parseLogLevel 설정값(cfg.Log.Level)을 logging.LogLevel로 변환한다. 알 수 없는 값은 info로 취급한다.
+func parseLogLevel(level string) logging.LogLevel {
+	switch strings.ToLower(level) {
+	case "debug":
+		return logging.LevelDebug
+	case "warn", "warning":
+		return logging.LevelWarn
+	case "error":
+		return logging.LevelError
+	default:
+		return logging.LevelInfo
+	}
+}
 
+func main() {
 	root := &wcli.Command{
 		Use:     "{{.ProjectName}}",
 		Short:   "{{.ProjectName}} 서버",
 		Version: version,
 		PersistentPreRun: func(ctx *wcli.Context) error {
-			return cmd.InitConfig()
+			if err := cmd.InitConfig(); err != nil {
+				return err
+			}
+			logging.SetLogger(logging.NewDefaultLogger(os.Stderr, parseLogLevel(cmd.Cfg().Log.Level), true))
+			return nil
 		},
 	}
 

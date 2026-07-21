@@ -15,7 +15,7 @@ ppm install wkqco33/cli_template
 ```bash
 git clone --recurse-submodules https://github.com/wkqco33/cli_template
 cd cli_template
-make install
+task install
 ```
 
 ## 기본 확인 명령
@@ -23,7 +23,7 @@ make install
 ```bash
 go run . --help
 go run . list
-make help
+task help
 ```
 
 ## 사용법
@@ -85,24 +85,32 @@ go build .
 
 ## 빌드
 
+[Task](https://taskfile.dev)를 빌드 도구로 사용한다.
+
 ```bash
-make          # 로컬 빌드
-make install  # 빌드 후 ~/.local/bin 에 설치
-make release  # 전체 플랫폼 릴리스 빌드 (dist/)
-make clean    # 빌드 산출물 삭제
-make uninstall
-make help     # 사용법 출력
+task           # 사용 가능한 태스크 목록 출력
+task build     # 로컬 빌드
+task install   # 빌드 후 ~/.local/bin 에 설치
+task release   # 전체 플랫폼 릴리스 빌드 (dist/)
+task test      # 단위 테스트 실행
+task smoke     # 생성된 템플릿의 go build 검증
+task clean     # 빌드 산출물 삭제
+task uninstall
+task help      # wtemp 사용법 출력
 ```
 
 ## 스모크 검증
 
 핵심 템플릿 생성 후 `go build ./...` 컴파일 가능 여부를 자동 검증한다.
 
-- 커버리지: `minimal/full` 기본 + sqlite on/off, `gin` 기본, `library` 기본
+- 커버리지: `minimal/full` 기본 + sqlite on/off, `gin`/`fiber`/`echo` 기본, `library` 기본
+- `fyne`은 GUI 빌드에 X11/OpenGL 등 시스템 헤더가 필요해 스모크 매트릭스에서 제외(수동 빌드로 확인)
 - sqlite 케이스는 `CGO_ENABLED=0`, `gcc` 미설치, windows 환경에서 skip 사유를 명시
 - 각 케이스는 `t.TempDir()`를 사용해 생성 산출물을 자동 정리
 
 ```bash
+task smoke
+# 또는
 go test -tags=smoke ./generator -run TestSmokeGeneratedTemplatesBuild -count=1
 ```
 

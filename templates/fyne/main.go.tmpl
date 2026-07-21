@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"fyne.io/fyne/v2/app"
 	wcliconfig "github.com/seoyc/wcli/config"
 	"{{.ModuleName}}/config"
@@ -10,11 +12,13 @@ import (
 func main() {
 	// CLI 설정 로드 (환경변수 및 config.yaml 지원)
 	var cfg config.Config
-	_ = wcliconfig.Load(&cfg,
+	if err := wcliconfig.Load(&cfg,
 		wcliconfig.WithFiles("config.yaml"),
 		wcliconfig.WithEnv(),
 		wcliconfig.WithPrefix("{{.ProjectName | upper}}"),
-	)
+	); err != nil {
+		log.Printf("설정 로드 실패, 기본값으로 계속합니다: %v", err)
+	}
 
 	a := app.New()
 	w := ui.NewMainWindow(a, &cfg)

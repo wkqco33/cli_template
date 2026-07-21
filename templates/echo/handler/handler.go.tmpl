@@ -8,6 +8,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 {{- if .SQLite}}
+	"github.com/seoyc/wcli/logging"
 	"{{.ModuleName}}/database"
 	"{{.ModuleName}}/database/models"
 {{- end}}
@@ -24,7 +25,8 @@ func Hello(c echo.Context) error {
 func ListExamples(c echo.Context) error {
 	var items []models.Example
 	if err := database.DB.Find(&items).Error; err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		logging.GetLogger().Log(logging.LevelError, "examples 조회 실패: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.JSON(http.StatusOK, items)
 }
@@ -36,7 +38,8 @@ func CreateExample(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 	if err := database.DB.Create(&item).Error; err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		logging.GetLogger().Log(logging.LevelError, "example 생성 실패: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.JSON(http.StatusCreated, item)
 }
@@ -48,7 +51,8 @@ func DeleteExample(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
 	}
 	if err := database.DB.Delete(&models.Example{}, id).Error; err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		logging.GetLogger().Log(logging.LevelError, "example 삭제 실패 (id=%d): %v", id, err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.JSON(http.StatusOK, map[string]int{"deleted": id})
 }

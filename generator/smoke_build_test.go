@@ -51,6 +51,8 @@ func TestSmokeGeneratedTemplatesBuild(t *testing.T) {
 		{name: "full-default", template: "full"},
 		{name: "full-sqlite", template: "full", sqlite: true, requireCGO: true, requireGCC: true},
 		{name: "gin-default", template: "gin"},
+		{name: "fiber-default", template: "fiber"},
+		{name: "echo-default", template: "echo"},
 		{name: "library-default", template: "library"},
 	}
 
