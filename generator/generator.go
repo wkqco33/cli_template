@@ -1,11 +1,9 @@
 package generator
 
 import (
-	"bytes"
 	"fmt"
 	"io/fs"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -30,66 +28,40 @@ type TemplateData struct {
 	SQLite      bool
 }
 
-// Submodule 템플릿 생성 시 추가할 git submodule 정보
-type Submodule struct {
-	Path string
-	URL  string
-}
-
 // TemplateMeta 템플릿 카탈로그 메타데이터
 type TemplateMeta struct {
-	Name       string
-	Desc       string
-	Submodules []Submodule
+	Name string
+	Desc string
 }
 
 var templateCatalog = []TemplateMeta{
 	{
 		Name: "minimal",
 		Desc: "루트 커맨드만 있는 최소 구조",
-		Submodules: []Submodule{
-			{Path: "wcli", URL: "https://github.com/wkqco33/wcli"},
-		},
 	},
 	{
 		Name: "full",
 		Desc: "서브커맨드 + wcli 설정이 포함된 전체 구조",
-		Submodules: []Submodule{
-			{Path: "wcli", URL: "https://github.com/wkqco33/wcli"},
-		},
 	},
 	{
 		Name: "gin",
 		Desc: "CLI + Gin 웹서버 (REST API 스켈레톤)",
-		Submodules: []Submodule{
-			{Path: "wcli", URL: "https://github.com/wkqco33/wcli"},
-		},
 	},
 	{
 		Name: "fiber",
 		Desc: "CLI + Fiber 웹서버 (REST API 스켈레톤)",
-		Submodules: []Submodule{
-			{Path: "wcli", URL: "https://github.com/wkqco33/wcli"},
-		},
 	},
 	{
 		Name: "echo",
 		Desc: "CLI + Echo 웹서버 (REST API 스켈레톤)",
-		Submodules: []Submodule{
-			{Path: "wcli", URL: "https://github.com/wkqco33/wcli"},
-		},
 	},
 	{
 		Name: "fyne",
 		Desc: "CLI + Fyne GUI 앱",
-		Submodules: []Submodule{
-			{Path: "wcli", URL: "https://github.com/wkqco33/wcli"},
-		},
 	},
 	{
-		Name:       "library",
-		Desc:       "Go 라이브러리 스켈레톤",
-		Submodules: nil,
+		Name: "library",
+		Desc: "Go 라이브러리 스켈레톤",
 	},
 }
 
@@ -112,14 +84,12 @@ const nameValidationGuide = "해결 방법: 영문 소문자(a-z), 숫자(0-9), 
 
 var (
 	renderTemplatesFunc = renderTemplates
-	initSubmodulesFunc  = initSubmodules
 )
 
 type generationProfile struct {
 	enabled     bool
 	startedAt   time.Time
 	rendering   time.Duration
-	git         time.Duration
 	postprocess time.Duration
 }
 
@@ -137,28 +107,20 @@ func (p *generationProfile) print() {
 	total := time.Since(p.startedAt)
 	fmt.Fprintf(
 		os.Stderr,
-		"[profile] total=%s render=%s git=%s postprocess=%s\n",
+		"[profile] total=%s render=%s postprocess=%s\n",
 		total.Truncate(time.Microsecond),
 		p.rendering.Truncate(time.Microsecond),
-		p.git.Truncate(time.Microsecond),
 		p.postprocess.Truncate(time.Microsecond),
 	)
 }
 
 var parsedTemplateCache sync.Map // map[string]*template.Template
-var (
-	gitBinaryOnce sync.Once
-	gitBinaryPath string
-	gitBinaryErr  error
-)
 
 // Templates 현재 지원하는 템플릿 메타데이터 목록을 반환한다
 func Templates() []TemplateMeta {
 	out := make([]TemplateMeta, 0, len(templateCatalog))
 	for _, meta := range templateCatalog {
-		cloned := meta
-		cloned.Submodules = append([]Submodule(nil), meta.Submodules...)
-		out = append(out, cloned)
+		out = append(out, meta)
 	}
 	return out
 }
@@ -184,8 +146,7 @@ func Generate(projectName string, opts Options) (retErr error) {
 		profile.print()
 	}()
 
-	meta, ok := templateMeta(opts.Template)
-	if !ok {
+	if _, ok := templateMeta(opts.Template); !ok {
 		return fmt.Errorf("알 수 없는 템플릿: %s (사용 가능: %s)", opts.Template, TemplateNamesCSV())
 	}
 
@@ -232,12 +193,6 @@ func Generate(projectName string, opts Options) (retErr error) {
 	}
 	profile.rendering = time.Since(renderStart)
 
-	gitStart := time.Now()
-	if err := initSubmodulesFunc(tempDir, meta); err != nil {
-		return fmt.Errorf("서브모듈 초기화 단계 실패: %w", err)
-	}
-	profile.git = time.Since(gitStart)
-
 	postprocessStart := time.Now()
 	if err := os.Rename(tempDir, targetPath); err != nil {
 		return fmt.Errorf("최종 경로 적용 실패 (%s -> %s): %w", tempDir, targetPath, err)
@@ -275,54 +230,6 @@ func renderTemplates(projectName, tmplName string, data TemplateData) error {
 
 		return renderFile(path, destPath, data)
 	})
-}
-
-// initSubmodules git init 후 필요한 서브모듈을 추가한다
-func initSubmodules(projectName string, meta TemplateMeta) error {
-	gitPath, err := detectGitBinary()
-	if err != nil {
-		return err
-	}
-
-	run := func(step string, args ...string) error {
-		cmd := exec.Command(gitPath, args...)
-		cmd.Dir = projectName
-		var stderr bytes.Buffer
-		var stdout bytes.Buffer
-		cmd.Stderr = &stderr
-		cmd.Stdout = &stdout
-		err := cmd.Run()
-		if err != nil {
-			reason := strings.TrimSpace(stderr.String())
-			if reason == "" {
-				reason = strings.TrimSpace(stdout.String())
-			}
-			if reason == "" {
-				reason = err.Error()
-			}
-			return fmt.Errorf(
-				"git 단계 실패 [%s]: '%s' 실행 중 오류가 발생했습니다: %s\n해결 방법: git 설정(사용자 정보/권한), 네트워크 상태, 대상 경로(%s)를 확인 후 다시 시도하세요",
-				step,
-				fmt.Sprintf("git %s", strings.Join(args, " ")),
-				reason,
-				projectName,
-			)
-		}
-		return nil
-	}
-
-	if err := run("프로젝트 저장소 초기화", "init"); err != nil {
-		return err
-	}
-
-	for _, sub := range meta.Submodules {
-		step := fmt.Sprintf("서브모듈 추가 (%s)", sub.Path)
-		if err := run(step, "submodule", "add", sub.URL, sub.Path); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func ValidateProjectAndModuleName(projectName, moduleName string) error {
@@ -403,17 +310,4 @@ func cachedTemplate(srcPath string) (*template.Template, error) {
 	}
 	actual, _ := parsedTemplateCache.LoadOrStore(srcPath, tmpl)
 	return actual.(*template.Template), nil
-}
-
-func detectGitBinary() (string, error) {
-	gitBinaryOnce.Do(func() {
-		gitBinaryPath, gitBinaryErr = exec.LookPath("git")
-		if gitBinaryErr != nil {
-			gitBinaryErr = fmt.Errorf("git 단계 실패 [환경 확인]: git 실행 파일을 찾을 수 없습니다. 해결 방법: git 설치 후 PATH를 확인하고 다시 실행하세요")
-		}
-	})
-	if gitBinaryErr != nil {
-		return "", gitBinaryErr
-	}
-	return gitBinaryPath, nil
 }

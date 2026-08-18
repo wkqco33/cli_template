@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/seoyc/wcli"
-	"github.com/seoyc/wcli/logging"
+	"github.com/wkqco33/wcli"
+	"github.com/wkqco33/wcli/logging"
 	"super_cli/cmd"
 )
 

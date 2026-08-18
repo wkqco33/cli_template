@@ -22,26 +22,24 @@ func TestGenerate_CleansTemporaryArtifactsOnFailure(t *testing.T) {
 	})
 
 	origRender := renderTemplatesFunc
-	origInit := initSubmodulesFunc
 	renderTemplatesFunc = func(projectName, tmplName string, data TemplateData) error {
 		if err := os.MkdirAll(projectName, 0o755); err != nil {
 			return err
 		}
-		return os.WriteFile(filepath.Join(projectName, "marker.txt"), []byte("partial"), 0o644)
-	}
-	initSubmodulesFunc = func(projectName string, meta TemplateMeta) error {
-		return errors.New("injected submodule failure")
+		if err := os.WriteFile(filepath.Join(projectName, "marker.txt"), []byte("partial"), 0o644); err != nil {
+			return err
+		}
+		return errors.New("injected render failure")
 	}
 	t.Cleanup(func() {
 		renderTemplatesFunc = origRender
-		initSubmodulesFunc = origInit
 	})
 
 	err = Generate("sample", Options{Template: "library"})
 	if err == nil {
 		t.Fatal("expected failure")
 	}
-	if !strings.Contains(err.Error(), "서브모듈 초기화 단계 실패") {
+	if !strings.Contains(err.Error(), "템플릿 렌더링 단계 실패") {
 		t.Fatalf("expected wrapped context error, got %q", err.Error())
 	}
 

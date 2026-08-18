@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	wcliconfig "github.com/seoyc/wcli/config"
+	wcliconfig "github.com/wkqco33/wcli/config"
 	"super_cli/config"
 )
 

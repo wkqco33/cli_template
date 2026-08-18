@@ -3,11 +3,7 @@ module {{.ModuleName}}
 go 1.23.0
 
 require (
-	github.com/seoyc/wcli v0.0.0{{if .SQLite}}
+	github.com/wkqco33/wcli v0.1.1{{if .SQLite}}
 	gorm.io/driver/sqlite v1.5.5
 	gorm.io/gorm v1.25.12{{end}}
-)
-
-replace (
-	github.com/seoyc/wcli => ./wcli
 )

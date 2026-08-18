@@ -3,8 +3,6 @@
 package generator
 
 import (
-	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,32 +11,6 @@ import (
 )
 
 func TestSmokeGeneratedTemplatesBuild(t *testing.T) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("현재 경로 확인 실패: %v", err)
-	}
-	wcliSrc := filepath.Clean(filepath.Join(cwd, "..", "wcli"))
-	if _, err := os.Stat(wcliSrc); err != nil {
-		t.Fatalf("wcli 소스 경로를 찾을 수 없습니다 (%s): %v", wcliSrc, err)
-	}
-
-	origInit := initSubmodulesFunc
-	initSubmodulesFunc = func(projectName string, meta TemplateMeta) error {
-		for _, sub := range meta.Submodules {
-			if sub.Path != "wcli" {
-				continue
-			}
-			dest := filepath.Join(projectName, sub.Path)
-			if err := copyDir(wcliSrc, dest); err != nil {
-				return fmt.Errorf("wcli 복사 실패: %w", err)
-			}
-		}
-		return nil
-	}
-	t.Cleanup(func() {
-		initSubmodulesFunc = origInit
-	})
-
 	cases := []struct {
 		name       string
 		template   string
@@ -110,52 +82,4 @@ func TestSmokeGeneratedTemplatesBuild(t *testing.T) {
 			}
 		})
 	}
-}
-
-func copyDir(src, dst string) error {
-	return filepath.WalkDir(src, func(path string, d os.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		rel, err := filepath.Rel(src, path)
-		if err != nil {
-			return err
-		}
-		target := filepath.Join(dst, rel)
-
-		if d.IsDir() {
-			return os.MkdirAll(target, 0o755)
-		}
-
-		info, err := d.Info()
-		if err != nil {
-			return err
-		}
-		if info.Mode()&os.ModeSymlink != 0 {
-			return nil
-		}
-		if !info.Mode().IsRegular() {
-			return nil
-		}
-
-		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
-			return err
-		}
-
-		in, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer in.Close()
-
-		out, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, info.Mode().Perm())
-		if err != nil {
-			return err
-		}
-		defer out.Close()
-
-		_, err = io.Copy(out, in)
-		return err
-	})
 }

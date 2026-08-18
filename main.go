@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"cli_template/cmd"
-	"github.com/seoyc/wcli"
+	"github.com/wkqco33/wcli"
 )
 
 const version = "0.1.0"

@@ -13,7 +13,7 @@ ppm install wkqco33/cli_template
 ### 직접 빌드
 
 ```bash
-git clone --recurse-submodules https://github.com/wkqco33/cli_template
+git clone https://github.com/wkqco33/cli_template
 cd cli_template
 task install
 ```
@@ -81,7 +81,7 @@ go build .
 ./my-tool --help
 ```
 
-생성된 프로젝트에는 `wcli`가 git submodule로 자동 추가된다.
+생성된 프로젝트는 공개된 `wcli` 라이브러리를 Go 모듈 의존성으로 사용한다.
 
 ## 빌드
 
@@ -116,7 +116,7 @@ go test -tags=smoke ./generator -run TestSmokeGeneratedTemplatesBuild -count=1
 
 ## 성능 측정 재현(로컬 기준)
 
-네트워크 편차를 줄이기 위해 서브모듈이 없는 `library` 템플릿으로 측정한다.
+네트워크 편차를 줄이기 위해 의존성이 적은 `library` 템플릿으로 측정한다.
 
 ```bash
 go build -o ./wtemp .

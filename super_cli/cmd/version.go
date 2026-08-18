@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/seoyc/wcli"
+	"github.com/wkqco33/wcli"
 )
 
 func VersionCmd(version string) *wcli.Command {

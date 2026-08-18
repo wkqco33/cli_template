@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"cli_template/generator"
-	"github.com/seoyc/wcli"
-	"github.com/seoyc/wcli/rich"
+	"github.com/wkqco33/wcli"
+	"github.com/wkqco33/wcli/rich"
 )
 
 func NewCmd() *wcli.Command {
@@ -36,7 +36,7 @@ func NewCmd() *wcli.Command {
 
 			rich.Println("[green][bold]완료![/bold][/green] %s 프로젝트가 생성되었습니다.", projectName)
 			fmt.Printf("\n  cd %s\n  go mod tidy\n  go build .\n\n", projectName)
-			rich.Println("[dim]wcli 서브모듈이 자동으로 추가되었습니다.[/dim]")
+			rich.Println("[dim]wcli 라이브러리가 의존성으로 추가되었습니다.[/dim]")
 			if sqlite {
 				rich.Println("[dim]SQLite + GORM이 포함되었습니다. database/ 디렉토리를 확인하세요.[/dim]")
 			}
