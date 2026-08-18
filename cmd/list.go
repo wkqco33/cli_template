@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"cli_template/generator"
 	"github.com/wkqco33/wcli"
 	"github.com/wkqco33/wcli/rich"
@@ -13,10 +11,11 @@ func ListCmd() *wcli.Command {
 		Use:   "list",
 		Short: "사용 가능한 템플릿 목록을 출력합니다",
 		Run: func(ctx *wcli.Context) error {
-			rich.Println("[bold][cyan]사용 가능한 템플릿:[/cyan][/bold]")
+			table := rich.NewTable("이름", "설명")
 			for _, t := range generator.Templates() {
-				fmt.Printf("  %-12s %s\n", t.Name, t.Desc)
+				table.AddRow(t.Name, t.Desc)
 			}
+			table.Print()
 			return nil
 		},
 	}
