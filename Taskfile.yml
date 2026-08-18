@@ -50,12 +50,36 @@ tasks:
       - rm -f {{.BIN}}
       - rm -rf {{.DIST}}
 
-  # --- 테스트 ---
+  # --- 테스트 (TDD) ---
 
   test:
-    desc: 단위 테스트 실행
+    desc: 단위 테스트 실행 (캐시 무시, -count=1)
     cmds:
-      - go test ./...
+      - go test -count=1 ./...
+
+  test-race:
+    desc: 데이터 레이스 탐지 포함 테스트 실행
+    cmds:
+      - go test -race -count=1 ./...
+
+  test-watch:
+    desc: 파일 변경 시 자동으로 테스트 재실행 (watchexec 필요)
+    cmds:
+      - watchexec -e go -- go test -count=1 ./...
+
+  coverage:
+    desc: 테스트 커버리지 측정 및 요약 출력 (coverage.out 생성)
+    cmds:
+      - go test -count=1 -coverprofile=coverage.out ./...
+      - go tool cover -func=coverage.out
+
+  coverage-html:
+    desc: 커버리지 HTML 리포트 생성 (coverage.html)
+    deps:
+      - coverage
+    cmds:
+      - go tool cover -html=coverage.out -o coverage.html
+      - 'echo "리포트: coverage.html"'
 
   smoke:
     desc: 생성된 템플릿의 go build 검증 (-tags=smoke)

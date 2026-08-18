@@ -99,6 +99,22 @@ task uninstall
 task help      # wtemp 사용법 출력
 ```
 
+## 개발 (TDD)
+
+이 프로젝트는 **TDD(Test-Driven Development)** 방식으로 개발한다.
+에이전트/개발자를 위한 상세 규칙은 [`AGENTS.md`](AGENTS.md)를 참고한다.
+
+```bash
+task test          # 단위 테스트 (캐시 무시)
+task test-race     # 데이터 레이스 탐지 포함
+task test-watch    # 파일 변경 시 자동 재실행 (watchexec 필요)
+task coverage      # 커버리지 측정 + 요약 (coverage.out)
+task coverage-html # HTML 리포트 생성 (coverage.html)
+```
+
+- 기능 추가/버그 수정은 **테스트를 먼저 작성**하고(Red), 최소 구현(Green), 리팩터링(Refactor) 순서로 진행한다.
+- 커밋 전 `task test`가 통과해야 하며, 템플릿/생성 로직 변경 시 `task smoke`도 확인한다.
+
 ## 스모크 검증
 
 핵심 템플릿 생성 후 `go build ./...` 컴파일 가능 여부를 자동 검증한다.
