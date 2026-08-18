@@ -39,6 +39,21 @@ wtemp new <project-name>
 wtemp new <project-name> -t minimal
 wtemp new <project-name> --template gin
 
+# Go 모듈 경로 지정 (기본값: 프로젝트 이름)
+wtemp new <project-name> --module github.com/user/<project-name>
+
+# 대상 디렉토리가 이미 존재해도 덮어쓰기
+wtemp new <project-name> --force
+
+# 생성 위치 지정
+wtemp new <project-name> -o ./sub/dir
+
+# 실제 생성 없이 생성될 파일 목록만 미리 보기
+wtemp new <project-name> --dry-run
+
+# 생성 후 git 저장소 초기화
+wtemp new <project-name> --git
+
 # SQLite + GORM 포함 생성
 wtemp new <project-name> --sqlite
 wtemp new <project-name> --sqlite -t gin
@@ -47,7 +62,7 @@ wtemp new <project-name> --sqlite -t gin
 wtemp new <project-name> -t library --profile
 ```
 
-`--profile`를 사용하면 생성 단계 시간(`render`, `git`, `postprocess`, `total`)이 stderr로 출력된다.
+`--profile`를 사용하면 생성 단계 시간(`render`, `postprocess`, `total`)이 stderr로 출력된다.
 
 ## 템플릿 목록
 
@@ -68,7 +83,7 @@ library      Go 라이브러리 스켈레톤
 ## `--sqlite` 옵션
 
 - `--sqlite`는 `minimal`, `full`, `gin`, `fiber`, `echo` 템플릿에서만 실제 코드/의존성에 반영된다.
-- `fyne`, `library` 템플릿에서는 현재 변경 사항이 없다.
+- `fyne`, `library` 템플릿에서는 지원하지 않으며, 지정 시 경고가 출력되고 옵션이 무시된다.
 - SQLite 드라이버(`gorm.io/driver/sqlite`)는 CGO가 필요하므로 `gcc`가 설치되어 있어야 한다.
 
 ## 생성 후 시작
