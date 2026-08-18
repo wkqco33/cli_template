@@ -20,6 +20,7 @@ func main() {
 	root.AddCommand(
 		cmd.NewCmd(),
 		cmd.ListCmd(),
+		wcli.NewCompletionCommand(root),
 	)
 
 	if err := root.Execute(os.Args[1:]); err != nil {
