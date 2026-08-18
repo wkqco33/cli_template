@@ -3,6 +3,7 @@ package cmd
 import (
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -57,7 +58,7 @@ func TestNewCmd_Structure(t *testing.T) {
 	for _, f := range flags {
 		names[f.Name] = true
 	}
-	for _, want := range []string{"template", "sqlite", "profile"} {
+	for _, want := range []string{"template", "sqlite", "profile", "module", "force", "output", "dry-run", "git"} {
 		if !names[want] {
 			t.Fatalf("expected flag %q to be registered, got %v", want, names)
 		}
@@ -106,6 +107,121 @@ func TestNewCmd_GeneratesProject(t *testing.T) {
 		if _, err := os.Stat(p); err != nil {
 			t.Fatalf("expected generated path %s: %v", p, err)
 		}
+	}
+}
+
+func TestNewCmd_ModuleFlag(t *testing.T) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd failed: %v", err)
+	}
+	tmpRoot := t.TempDir()
+	if err := os.Chdir(tmpRoot); err != nil {
+		t.Fatalf("chdir failed: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(cwd) })
+
+	root := newRootCmd(NewCmd())
+	if err := root.Execute([]string{"new", "myapp", "-t", "minimal", "--module", "github.com/user/myapp"}); err != nil {
+		t.Fatalf("new 실행 실패: %v", err)
+	}
+	content, err := os.ReadFile(filepath.Join("myapp", "go.mod"))
+	if err != nil {
+		t.Fatalf("read go.mod failed: %v", err)
+	}
+	if !strings.Contains(string(content), "module github.com/user/myapp") {
+		t.Fatalf("expected module path in go.mod, got:\n%s", string(content))
+	}
+}
+
+func TestNewCmd_ForceFlag(t *testing.T) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd failed: %v", err)
+	}
+	tmpRoot := t.TempDir()
+	if err := os.Chdir(tmpRoot); err != nil {
+		t.Fatalf("chdir failed: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(cwd) })
+
+	if err := os.MkdirAll("myapp", 0o755); err != nil {
+		t.Fatalf("mkdir failed: %v", err)
+	}
+
+	root := newRootCmd(NewCmd())
+	if err := root.Execute([]string{"new", "myapp", "-t", "minimal", "--force"}); err != nil {
+		t.Fatalf("new --force 실행 실패: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join("myapp", "main.go")); err != nil {
+		t.Fatalf("expected generated main.go after force: %v", err)
+	}
+}
+
+func TestNewCmd_OutputFlag(t *testing.T) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd failed: %v", err)
+	}
+	tmpRoot := t.TempDir()
+	if err := os.Chdir(tmpRoot); err != nil {
+		t.Fatalf("chdir failed: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(cwd) })
+
+	root := newRootCmd(NewCmd())
+	if err := root.Execute([]string{"new", "myapp", "-t", "minimal", "--output", "sub/dir"}); err != nil {
+		t.Fatalf("new --output 실행 실패: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join("sub", "dir", "myapp", "main.go")); err != nil {
+		t.Fatalf("expected generated file in output dir: %v", err)
+	}
+}
+
+func TestNewCmd_DryRunFlag(t *testing.T) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd failed: %v", err)
+	}
+	tmpRoot := t.TempDir()
+	if err := os.Chdir(tmpRoot); err != nil {
+		t.Fatalf("chdir failed: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(cwd) })
+
+	root := newRootCmd(NewCmd())
+	out := captureStdout(t, func() {
+		if err := root.Execute([]string{"new", "myapp", "-t", "minimal", "--dry-run"}); err != nil {
+			t.Fatalf("new --dry-run 실행 실패: %v", err)
+		}
+	})
+	if !strings.Contains(out, "main.go") {
+		t.Fatalf("expected dry-run output to list main.go, got:\n%s", out)
+	}
+	if _, err := os.Stat("myapp"); !os.IsNotExist(err) {
+		t.Fatalf("dry-run must not create target directory, stat err: %v", err)
+	}
+}
+
+func TestNewCmd_SQLiteUnsupportedWarning(t *testing.T) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd failed: %v", err)
+	}
+	tmpRoot := t.TempDir()
+	if err := os.Chdir(tmpRoot); err != nil {
+		t.Fatalf("chdir failed: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(cwd) })
+
+	root := newRootCmd(NewCmd())
+	out := captureStdout(t, func() {
+		if err := root.Execute([]string{"new", "myapp", "-t", "library", "--sqlite"}); err != nil {
+			t.Fatalf("new 실행 실패: %v", err)
+		}
+	})
+	if !strings.Contains(out, "지원하지 않습니다") {
+		t.Fatalf("expected sqlite-unsupported warning, got:\n%s", out)
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -16,9 +17,13 @@ import (
 
 // Options 프로젝트 생성 옵션
 type Options struct {
-	Template string
-	SQLite   bool
-	Profile  bool
+	Template   string
+	SQLite     bool
+	Profile    bool
+	ModuleName string // Go 모듈 경로 (비어 있으면 projectName 사용)
+	Force      bool   // 대상 디렉토리가 이미 존재해도 덮어쓰기
+	OutputDir  string // 생성 위치 (비어 있으면 현재 디렉토리)
+	DryRun     bool   // 실제 생성 없이 파일 목록만 출력
 }
 
 // TemplateData 템플릿 렌더링 시 주입되는 데이터
@@ -67,10 +72,24 @@ var templateCatalog = []TemplateMeta{
 
 var templateCatalogByName = map[string]TemplateMeta{}
 
+// sqliteSupportedTemplates --sqlite 옵션이 실제로 반영되는 템플릿 목록
+var sqliteSupportedTemplates = map[string]bool{
+	"minimal": true,
+	"full":    true,
+	"gin":     true,
+	"fiber":   true,
+	"echo":    true,
+}
+
 func init() {
 	for _, meta := range templateCatalog {
 		templateCatalogByName[meta.Name] = meta
 	}
+}
+
+// SQLiteSupported 템플릿이 --sqlite 옵션을 지원하는지 여부를 반환한다
+func SQLiteSupported(template string) bool {
+	return sqliteSupportedTemplates[template]
 }
 
 var funcMap = template.FuncMap{
@@ -139,6 +158,25 @@ func templateMeta(name string) (TemplateMeta, bool) {
 	return meta, ok
 }
 
+// resolveOptions 옵션을 검증하고 모듈 이름과 대상 경로를 결정한다
+func resolveOptions(projectName string, opts Options) (moduleName, targetPath string, err error) {
+	moduleName = opts.ModuleName
+	if moduleName == "" {
+		moduleName = projectName
+	}
+	if err = ValidateProjectAndModuleName(projectName, moduleName); err != nil {
+		return "", "", err
+	}
+	if _, ok := templateMeta(opts.Template); !ok {
+		return "", "", fmt.Errorf("알 수 없는 템플릿: %s (사용 가능: %s)", opts.Template, TemplateNamesCSV())
+	}
+	targetPath = projectName
+	if opts.OutputDir != "" {
+		targetPath = filepath.Join(opts.OutputDir, projectName)
+	}
+	return moduleName, targetPath, nil
+}
+
 // Generate 지정한 이름과 옵션으로 프로젝트를 생성한다
 func Generate(projectName string, opts Options) (retErr error) {
 	profile := newGenerationProfile(opts.Profile)
@@ -146,22 +184,26 @@ func Generate(projectName string, opts Options) (retErr error) {
 		profile.print()
 	}()
 
-	if _, ok := templateMeta(opts.Template); !ok {
-		return fmt.Errorf("알 수 없는 템플릿: %s (사용 가능: %s)", opts.Template, TemplateNamesCSV())
-	}
-
-	if err := ValidateProjectAndModuleName(projectName, projectName); err != nil {
+	moduleName, targetPath, err := resolveOptions(projectName, opts)
+	if err != nil {
 		return err
 	}
 
-	targetPath := projectName
 	if _, err := os.Stat(targetPath); err == nil {
-		return fmt.Errorf("디렉토리가 이미 존재합니다: %s", targetPath)
+		if !opts.Force {
+			return fmt.Errorf("디렉토리가 이미 존재합니다: %s", targetPath)
+		}
+		if err := os.RemoveAll(targetPath); err != nil {
+			return fmt.Errorf("기존 디렉토리 제거 실패 (%s): %w", targetPath, err)
+		}
 	} else if !os.IsNotExist(err) {
 		return fmt.Errorf("대상 경로 확인 실패 (%s): %w", targetPath, err)
 	}
 
 	parentDir := filepath.Dir(targetPath)
+	if err := os.MkdirAll(parentDir, 0o755); err != nil {
+		return fmt.Errorf("출력 디렉토리 생성 실패 (%s): %w", parentDir, err)
+	}
 	baseName := filepath.Base(targetPath)
 	tempDir, err := os.MkdirTemp(parentDir, "."+baseName+".tmp-*")
 	if err != nil {
@@ -183,7 +225,7 @@ func Generate(projectName string, opts Options) (retErr error) {
 
 	data := TemplateData{
 		ProjectName: projectName,
-		ModuleName:  projectName,
+		ModuleName:  moduleName,
 		SQLite:      opts.SQLite,
 	}
 
@@ -203,6 +245,70 @@ func Generate(projectName string, opts Options) (retErr error) {
 	return nil
 }
 
+// DryRun 실제 생성 없이 생성될 파일 목록을 반환한다
+func DryRun(projectName string, opts Options) ([]string, error) {
+	_, targetPath, err := resolveOptions(projectName, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	parentDir := filepath.Dir(targetPath)
+	if err := os.MkdirAll(parentDir, 0o755); err != nil {
+		return nil, fmt.Errorf("출력 디렉토리 생성 실패 (%s): %w", parentDir, err)
+	}
+	baseName := filepath.Base(targetPath)
+	tempDir, err := os.MkdirTemp(parentDir, "."+baseName+".tmp-*")
+	if err != nil {
+		return nil, fmt.Errorf("임시 작업 디렉토리 생성 실패 (parent=%s): %w", parentDir, err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	data := TemplateData{
+		ProjectName: projectName,
+		ModuleName:  opts.ModuleName,
+		SQLite:      opts.SQLite,
+	}
+	if data.ModuleName == "" {
+		data.ModuleName = projectName
+	}
+
+	if err := renderTemplatesFunc(tempDir, opts.Template, data); err != nil {
+		return nil, fmt.Errorf("템플릿 렌더링 단계 실패: %w", err)
+	}
+	return collectFiles(tempDir)
+}
+
+// collectFiles 디렉토리 아래의 모든 파일을 상대 경로(슬래시 구분)로 수집한다
+func collectFiles(root string) ([]string, error) {
+	var files []string
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		rel, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		files = append(files, filepath.ToSlash(rel))
+		return nil
+	})
+	return files, err
+}
+
+// InitGit 지정한 디렉토리에 git 저장소를 초기화한다
+func InitGit(dir string) error {
+	cmd := exec.Command("git", "init")
+	cmd.Dir = dir
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("git init 실패 (%s): %w\n%s", dir, err, string(out))
+	}
+	return nil
+}
+
 func renderTemplates(projectName, tmplName string, data TemplateData) error {
 	return fs.WalkDir(templates.FS, tmplName, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -219,6 +325,10 @@ func renderTemplates(projectName, tmplName string, data TemplateData) error {
 			return nil
 		}
 
+		// embed.FS는 '.'로 시작하는 파일을 제외하므로 gitignore.tmpl을 .gitignore로 매핑한다
+		if relPath == "gitignore.tmpl" {
+			relPath = ".gitignore"
+		}
 		destPath := filepath.Join(projectName, strings.TrimSuffix(relPath, ".tmpl"))
 
 		if d.IsDir() {
@@ -236,8 +346,34 @@ func ValidateProjectAndModuleName(projectName, moduleName string) error {
 	if err := validateSafeName("프로젝트 이름", projectName); err != nil {
 		return err
 	}
-	if err := validateSafeName("모듈 이름", moduleName); err != nil {
+	if err := validateModuleName(moduleName); err != nil {
 		return err
+	}
+	return nil
+}
+
+// validateModuleName Go 모듈 경로를 검증한다. 도메인 경로(github.com/user/repo)를 허용한다.
+func validateModuleName(name string) error {
+	trimmed := strings.TrimSpace(name)
+	if trimmed == "" {
+		return fmt.Errorf("모듈 이름이(가) 비어 있습니다. %s", nameValidationGuide)
+	}
+	if name != trimmed {
+		return fmt.Errorf("모듈 이름에 앞뒤 공백이 포함되어 있습니다. %s", nameValidationGuide)
+	}
+	if strings.ContainsAny(name, " \t\n\r") {
+		return fmt.Errorf("모듈 이름에 공백 문자가 포함되어 있습니다. %s", nameValidationGuide)
+	}
+	if strings.HasPrefix(name, "/") || strings.HasSuffix(name, "/") {
+		return fmt.Errorf("모듈 이름은 /로 시작하거나 끝날 수 없습니다. %s", nameValidationGuide)
+	}
+	for _, seg := range strings.Split(name, "/") {
+		if seg == "" {
+			return fmt.Errorf("모듈 이름에 빈 경로 세그먼트가 포함되어 있습니다. %s", nameValidationGuide)
+		}
+		if !safeNamePattern.MatchString(seg) {
+			return fmt.Errorf("모듈 이름 형식이 올바르지 않습니다. %s", nameValidationGuide)
+		}
 	}
 	return nil
 }
