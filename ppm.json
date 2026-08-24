@@ -1,5 +1,5 @@
 {
-  "description": "wcli + wconf 기반 Go CLI 프로젝트 템플릿 생성기",
+  "description": "wcli 기반 Go CLI 프로젝트 템플릿 생성기. 여러 웹 프레임워크와 라이브러리 템플릿을 지원합니다.",
   "author": "wkqco33",
   "homepage": "https://github.com/wkqco33/cli_template",
   "bin_name": "wtemp"

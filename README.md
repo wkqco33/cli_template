@@ -1,6 +1,11 @@
 # wtemp
 
-wcli 기반 Go CLI 프로젝트 템플릿 생성기.
+wcli 기반 Go CLI 프로젝트 템플릿 생성기. 여러 Go CLI, 웹 서버, GUI, 라이브러리 프로젝트를 일관된 구조로 생성합니다.
+
+- 패키지 메타데이터: [`ppm.json`](ppm.json)
+- 기여 방법: [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- 보안 신고: [`SECURITY.md`](SECURITY.md)
+- 라이선스: [`LICENSE`](LICENSE)
 
 ## 설치
 
@@ -10,10 +15,12 @@ wcli 기반 Go CLI 프로젝트 템플릿 생성기.
 ppm install wkqco33/cli_template
 ```
 
+릴리스 아카이브마다 `.sha256` 체크섬 파일이 함께 제공됩니다. 운영 환경에서는 패키지 관리자의 무결성 검증을 활성화하세요.
+
 ### 직접 빌드
 
 ```bash
-git clone https://github.com/wkqco33/cli_template
+git clone https://github.com/wkqco33/cli_template.git
 cd cli_template
 task install
 ```

@@ -28,6 +28,19 @@ go.work
 # wtemp 빌드 산출물 (task build / task release)
 /wtemp
 /dist/
+/super_cli/super_cli
+
+# 로컬 테스트 및 프로파일 산출물
+/coverage.out
+/coverage.html
+
+# 로컬 설정 및 비밀 자료
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
 
 ### Linux ###
 *~

@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   release:
@@ -27,6 +27,13 @@ jobs:
 
       - name: Build release artifacts
         run: task release
+
+      - name: Create SHA-256 checksums
+        working-directory: dist
+        run: |
+          for asset in *.tar.gz *.zip; do
+            sha256sum "$asset" > "$asset.sha256"
+          done
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
