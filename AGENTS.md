@@ -198,6 +198,8 @@ task coverage-check
 ```
 
 - 템플릿 또는 생성 로직을 변경하면 `task smoke`도 통과해야 한다.
+- 릴리스 전에 `CHANGELOG.md`의 `Unreleased`를 버전 섹션으로 확정한다.
+  릴리스 노트는 그 섹션에서 생성되고, 없으면 태그 메시지로 폴백한다(`CONTRIBUTING.md` 릴리스 절차).
 - 릴리스는 `ppm.json`의 `bin_name`과 일치하는 플랫폼별 아카이브 및 SHA-256 체크섬을 제공하고,
   빌드 provenance를 함께 게시한다. 릴리스 파이프라인은 태그 커밋에서 테스트를 먼저 통과시킨다.
 

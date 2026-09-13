@@ -53,6 +53,15 @@ CI는 ubuntu·windows·macos에서 단위 테스트를 돌리고, Linux에서 ra
 - CLI 템플릿의 `version`은 상수가 아니라 변수여야 합니다(`-X main.version` 주입).
   (계약 테스트 `TestTemplates_VersionIsStampable`이 검사합니다.)
 
+## 릴리스
+
+1. `CHANGELOG.md`의 `Unreleased` 항목을 `## [x.y.z] - YYYY-MM-DD`로 확정하고 새 `Unreleased` 섹션을 연다.
+2. `git tag -a vX.Y.Z -m "<요약>"`로 **주석 태그**를 만들고 푸시한다.
+3. Release 워크플로가 테스트 검증 → 크로스 플랫폼 빌드(버전 스탬프) → SHA-256 체크섬 →
+   SLSA provenance 서명 → GitHub Release 생성까지 수행한다.
+   릴리스 본문은 1번의 CHANGELOG 섹션에서 만들고, 섹션이 없으면 태그 메시지로 폴백한다.
+4. 배포된 리눅스 아카이브의 `--version`이 태그와 일치하는지 워크플로가 자동으로 확인한다.
+
 ## 라이선스
 
 기여물은 저장소의 [MIT License](LICENSE)에 따라 제공되는 것으로 간주합니다.

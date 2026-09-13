@@ -6,10 +6,16 @@
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-09-13
+
 ### Fixed
 
 - `go install github.com/wkqco33/cli_template/cmd/wtemp@vX.Y.Z`로 설치한 바이너리의
   `--version`이 `dev`로 표시되던 문제 (빌드 정보의 모듈 버전으로 폴백)
+
+### Changed
+
+- 릴리스 노트를 `CHANGELOG.md`의 해당 버전 섹션에서 만들고, 없으면 태그 메시지로 폴백한다
 
 ## [0.3.0] - 2026-09-13
 

@@ -76,9 +76,27 @@ jobs:
           NOTES_PATH: ${{ runner.temp }}/release-notes.md
         run: |
           set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+
+          # 체크아웃이 주석 태그 객체를 가져오지 않을 수 있으므로 명시적으로 받아 둔다.
+          git fetch --force --tags origin "refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}" || true
+
           prev=$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)
+
+          # CHANGELOG의 해당 버전 섹션을 우선 사용하고, 없으면 태그 메시지로 폴백한다.
+          section=$(awk -v v="$version" '
+            index($0, "## [" v "]") == 1 { found = 1; next }
+            found && index($0, "## [") == 1 { exit }
+            found { print }
+          ' CHANGELOG.md)
+
           {
-            git tag -l --format='%(contents)' "$GITHUB_REF_NAME"
+            if [ -n "${section//[[:space:]]/}" ]; then
+              echo "## ${GITHUB_REF_NAME}"
+              printf '%s\n' "$section"
+            else
+              git tag -l --format='%(contents)' "$GITHUB_REF_NAME"
+            fi
             echo
             if [ -n "$prev" ]; then
               echo "**Full Changelog**: https://github.com/${GITHUB_REPOSITORY}/compare/${prev}...${GITHUB_REF_NAME}"
