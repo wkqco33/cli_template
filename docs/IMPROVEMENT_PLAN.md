@@ -385,7 +385,7 @@ CI에 커버리지 임계값(예: total ≥ 85%, `main`·`cmd`·`generator` 각�
 | P1-7 드리프트 | `task help`가 바이너리 도움말 사용, 템플릿 Go/wcli 버전 계약 테스트, README 플래그 대조 테스트 |
 | P1-8 의존성 | wcli v0.2.3 (루트 + 템플릿 6종) |
 | P1-9 super_cli | 삭제(템플릿과 드리프트된 생성물, 참조 없음) |
-| P1-10 커버리지 | 86.6% (82.0% → 86.6%), `task coverage-check` 임계값 85% + CI 적용 |
+| P1-10 커버리지 | 82.0% → 88.7%(go1.26.1, CI) / 90.3%(go1.27.1), `task coverage-check` 임계값 85% + CI 적용 |
 | P2-1 CI | OS 매트릭스, `task lint`, shuffle, govulncheck, gitleaks, 커버리지 아티팩트 |
 | P2-2 릴리스 | 게시 전 verify 잡, `-trimpath`+버전 주입, SHA-256, SLSA provenance, 릴리스 노트, 액션 SHA 고정, `cache: false` |
 | P2-3 위생 | CHANGELOG, `.gitattributes`, 이슈/PR 템플릿, Dependabot(cooldown 포함) |

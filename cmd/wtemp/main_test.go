@@ -3,15 +3,42 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/wkqco33/cli_template/generator"
 	"github.com/wkqco33/cli_template/internal/cli"
 	"github.com/wkqco33/wcli/rich"
 )
+
+// TestExitCode_Mapping 오류 타입이 문서화된 종료 코드로 매핑되는지 검증한다.
+func TestExitCode_Mapping(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want int
+	}{
+		{name: "usage", err: generator.NewUsageError("bad input"), want: exitUsage},
+		{name: "conflict", err: &generator.ConflictError{Path: "app"}, want: exitConflict},
+		{name: "external", err: &generator.ExternalError{Tool: "git init", Err: errors.New("boom")}, want: exitExternal},
+		{name: "input-required", err: &generator.InputRequiredError{Path: "app"}, want: exitInputNeeded},
+		{name: "wrapped-conflict", err: fmt.Errorf("context: %w", &generator.ConflictError{Path: "app"}), want: exitConflict},
+		{name: "unclassified", err: errors.New("boom"), want: exitError},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := exitCode(tc.err); got != tc.want {
+				t.Fatalf("exitCode(%v) = %d, want %d", tc.err, got, tc.want)
+			}
+		})
+	}
+}
 
 // runCLI run()을 실행하고 stdout/stderr/종료 코드를 반환한다.
 func runCLI(args ...string) (stdout, stderr string, code int) {

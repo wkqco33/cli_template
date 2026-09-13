@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
@@ -127,5 +128,41 @@ func TestGenerate_NoSQLiteSkipsDatabase(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(projectName, "database")); !os.IsNotExist(err) {
 		t.Fatalf("expected database/ to be skipped without sqlite, stat err: %v", err)
+	}
+}
+
+// TestGenerate_ProfileWritesToWriter --profile은 지정한 writer로 단계 시간을 출력한다.
+func TestGenerate_ProfileWritesToWriter(t *testing.T) {
+	chdirTemp(t)
+	var buf bytes.Buffer
+
+	opts := Options{Template: "minimal", Profile: true, ProfileWriter: &buf}
+	if err := Generate("profiled-app", opts); err != nil {
+		t.Fatalf("generate failed: %v", err)
+	}
+
+	got := buf.String()
+	for _, want := range []string{"[profile]", "total=", "render=", "postprocess="} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("expected profile output to contain %q, got %q", want, got)
+		}
+	}
+}
+
+// TestGenerate_OutputDirIsAFileFails --output이 파일을 가리키면 디렉토리 생성 실패로 중단한다.
+func TestGenerate_OutputDirIsAFileFails(t *testing.T) {
+	tmp := chdirTemp(t)
+	filePath := filepath.Join(tmp, "afile")
+	if err := os.WriteFile(filePath, []byte("x"), 0o644); err != nil {
+		t.Fatalf("write file failed: %v", err)
+	}
+
+	err := Generate("app", Options{Template: "minimal", OutputDir: filePath})
+	if err == nil {
+		t.Fatal("expected error when output path is a file")
+	}
+	// 파일을 출력 경로로 쓰면 대상 경로 확인 단계에서 ENOTDIR로 실패한다.
+	if !strings.Contains(err.Error(), "afile") {
+		t.Fatalf("expected error to name the offending path, got %q", err.Error())
 	}
 }

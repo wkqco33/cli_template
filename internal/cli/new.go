@@ -89,7 +89,7 @@ func NewCmd(env *Env) *wcli.Command {
 				if err != nil {
 					return err
 				}
-				resolvedFormat, err := resolveFormat(format, env.Stdout)
+				resolvedFormat, err := resolveFormat(format, isTerminal(env.Stdout))
 				if err != nil {
 					return err
 				}

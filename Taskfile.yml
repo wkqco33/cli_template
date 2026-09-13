@@ -87,6 +87,8 @@ tasks:
 
   coverage-check:
     desc: 커버리지 임계값(85%) 검증
+    # 커버리지 집계는 Go 툴체인에 따라 달라진다(go1.26.1=88.7%, go1.27.1=90.3%).
+    # CI는 go.mod의 go 버전을 사용하므로 임계값은 그 기준으로 여유를 두고 잡았다.
     cmds:
       - go test -count=1 -coverprofile=coverage.out ./...
       - |

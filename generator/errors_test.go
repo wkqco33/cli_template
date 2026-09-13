@@ -3,6 +3,7 @@ package generator
 import (
 	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -47,8 +48,9 @@ func TestResolve_ReturnsTargetPath(t *testing.T) {
 	if got.ModuleName != "myapp" {
 		t.Fatalf("expected module name %q, got %q", "myapp", got.ModuleName)
 	}
-	if got.TargetPath != "out/myapp" {
-		t.Fatalf("expected target path %q, got %q", "out/myapp", got.TargetPath)
+	wantPath := filepath.Join("out", "myapp")
+	if got.TargetPath != wantPath {
+		t.Fatalf("expected target path %q, got %q", wantPath, got.TargetPath)
 	}
 }
 
@@ -86,6 +88,19 @@ func TestInitGit_FailureIsExternalError(t *testing.T) {
 	}
 	if external.Tool != "git init" {
 		t.Fatalf("expected tool %q, got %q", "git init", external.Tool)
+	}
+}
+
+// TestExternalError_MessageAndUnwrap 외부 도구 오류는 도구 이름과 원인을 함께 노출한다.
+func TestExternalError_MessageAndUnwrap(t *testing.T) {
+	inner := errors.New("exit status 127")
+	err := &ExternalError{Tool: "git init", Err: inner}
+
+	if !strings.Contains(err.Error(), "git init") || !strings.Contains(err.Error(), "exit status 127") {
+		t.Fatalf("expected tool and cause in message, got %q", err.Error())
+	}
+	if !errors.Is(err, inner) {
+		t.Fatalf("expected Unwrap to expose the cause, got %v", errors.Unwrap(err))
 	}
 }
 

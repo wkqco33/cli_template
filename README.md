@@ -224,6 +224,7 @@ task vuln          # 알려진 취약점 검사
 - 커밋 전 `task test`가 통과해야 하며, 템플릿/생성 로직 변경 시 `task smoke`도 확인한다.
 - 템플릿 계약 테스트가 `templates/*/go.mod.tmpl`의 Go/wcli 버전을 루트 `go.mod`와 대조하고,
   README·`task help` 드리프트도 테스트로 감지한다.
+- 커버리지 임계값은 85%이며, 집계는 Go 툴체인에 따라 다르다(go1.26.1 기준 88.7%).
 
 ## 스모크 검증
 

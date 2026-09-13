@@ -40,7 +40,7 @@ func ListCmd(env *Env) *wcli.Command {
 		Short: "사용 가능한 템플릿 목록을 출력합니다",
 		Long:  listLong,
 		Run: func(ctx *wcli.Context) error {
-			resolved, err := resolveFormat(format, env.Stdout)
+			resolved, err := resolveFormat(format, isTerminal(env.Stdout))
 			if err != nil {
 				return err
 			}

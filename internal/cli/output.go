@@ -17,12 +17,12 @@ const (
 
 // resolveFormat 명시된 형식을 검증한다. 지정하지 않으면 TTY면 table,
 // 파이프·CI면 plain으로 자동 선택한다.
-func resolveFormat(explicit string, w io.Writer) (string, error) {
+func resolveFormat(explicit string, tty bool) (string, error) {
 	switch explicit {
 	case FormatTable, FormatPlain, FormatJSON:
 		return explicit, nil
 	case "":
-		if isTerminal(w) {
+		if tty {
 			return FormatTable, nil
 		}
 		return FormatPlain, nil
