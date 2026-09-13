@@ -10,7 +10,8 @@
 - **wtemp**: `wcli` 기반 Go CLI 프로젝트 템플릿 생성기.
 - **언어/도구**: Go 1.26+, [Task](https://taskfile.dev) 빌드 도구.
 - **핵심 패키지**:
-  - `cmd/` — CLI 커맨드 정의 (`new`, `list`).
+  - `internal/cli/` — CLI 커맨드 정의 (`new`, `list`)와 실행 환경(`Env`).
+- `cmd/wtemp/` — 메인 패키지(`run`/종료 코드 매핑).
   - `generator/` — 템플릿 렌더링, 이름 검증, 원자적 생성 로직.
   - `templates/` — `embed.FS`로 내장된 템플릿 파일들.
 - **외부 의존성**: `github.com/wkqco33/wcli` (CLI 라이브러리).
@@ -43,7 +44,11 @@ task test            # 단위 테스트 (캐시 무시, -count=1)
 task test-race       # 데이터 레이스 탐지 포함
 task test-watch      # 파일 변경 시 자동 재실행 (watchexec 필요)
 task coverage        # 커버리지 측정 + 요약 (coverage.out)
+task coverage-check  # 커버리지 임계값(85%) 검증
 task coverage-html   # HTML 리포트 생성 (coverage.html)
+task lint            # gofmt + go vet
+task vuln            # govulncheck (별도 설치 필요)
+task bench           # 생성 성능 벤치마크
 task smoke           # 생성된 템플릿의 go build 검증 (-tags=smoke)
 ```
 
@@ -115,22 +120,35 @@ func TestSomething_Scenario(t *testing.T) {
 
 핵심 로직이므로 **가장 높은 우선순위**로 테스트한다.
 
-- `ValidateProjectAndModuleName` — 유효/무효 이름 케이스, 에러 문구.
-- `Generate` — 성공 시 산출물 구조, 실패 시 임시 디렉토리 정리(원자성).
+- `ValidateProjectAndModuleName` / `Resolve` — 유효/무효 이름 케이스, 에러 문구, 타입화된 오류(`UsageError`).
+- `Generate` — 성공 시 산출물 구조, 실패 시 임시 디렉토리 정리, `--force` 실패 시 기존 디렉토리 보존(원자성).
+- `DryRun` — 파일시스템을 변경하지 않고 실제 생성과 같은 파일 목록을 내놓는다.
+- `planFiles` — dry-run과 실제 생성이 공유하는 단일 계획 소스. SQLite 스킵 규칙 포함.
 - `Templates` / `TemplateNamesCSV` — 카탈로그 무결성.
+- `template_contract_test.go` — 템플릿 계약(버전 주입 가능, `templates/*/go.mod.tmpl`의 Go·wcli 버전이 루트 `go.mod`와 일치).
+- `benchmark_test.go` — 생성 성능 회귀 감지.
 - `smoke_build_test.go` — `//go:build smoke` 태그. 생성된 템플릿이 실제로 컴파일되는지 검증.
 
-### `cmd/`
+### `internal/cli/`
 
-- 커맨드 구조(`Use`, `Short`, 등록된 플래그) 검증.
+- 커맨드 구조(`Use`, `Short`, 등록된 플래그·단축키) 검증.
 - 실행 경로: 인자 누락/검증 실패 시 에러 반환, `list` 출력 내용.
-- `rich.Println`/`fmt.Printf`는 `os.Stdout`에 직접 쓰므로, 출력 캡처가 필요하면
-  `os.Pipe`로 `os.Stdout`을 교체하는 헬퍼를 사용한다. (`cmd/cmd_test.go` 참고)
+- 출력은 `Env`(`internal/cli/env.go`)로 주입한다. `Env.Stdout`은 결과, `Env.Stderr`는 진행·경고·오류다.
+  테스트는 `newTestEnv()`로 버퍼와 `strings.Reader`를 주입하고, 대화형 경로는 `interactive("y\n")`로 만든다.
+  터미널 판정은 `isTerminalFD`(ioctl)를 쓰므로 `/dev/null`을 TTY로 오인하지 않는다.
+- 오류 타입(`generator.UsageError` 등)은 `errors.As`로 검증한다. 문구만 비교하지 않는다.
+
+### 메인 (`cmd/wtemp/main.go`)
+
+- `run(args, stdout, stderr)`가 종료 코드를 반환한다. 종료 코드 표를 바꾸면 테스트를 함께 갱신한다.
+- `cmd/wtemp/docs_drift_test.go` — README의 플래그 문서와 `task help`가 실제 플래그 목록과 어긋나면 실패한다.
 
 ### `templates/`
 
 - 템플릿 파일 자체는 `embed.FS`로 내장된다. 템플릿 문법 오류는
   `generator`의 렌더링 테스트/스모크 테스트가 잡아준다.
+- 의존성·Go 버전을 올릴 때는 루트 `go.mod`와 `templates/*/go.mod.tmpl`을 **함께** 수정한다
+  (계약 테스트가 강제한다).
 
 ---
 
@@ -149,9 +167,10 @@ func TestSomething_Scenario(t *testing.T) {
 - 커밋 메시지는 `type: 요약` 형식 (예: `feat:`, `fix:`, `test:`, `refactor:`, `docs:`).
 - 커밋 전 체크리스트:
   - [ ] `task test` 통과
+  - [ ] `task coverage-check` 통과 (총 커버리지 85% 이상)
   - [ ] `task smoke` 통과 (템플릿 로직 변경 시)
-  - [ ] `go vet ./...` 경고 없음
-  - [ ] `gofmt` 적용됨
+  - [ ] `task lint` 경고 없음 (gofmt + go vet)
+  - [ ] 플래그·종료 코드·출력 형식을 바꿨다면 `README.md`와 `CHANGELOG.md` 갱신
 
 ---
 
@@ -175,28 +194,40 @@ go mod verify
 go vet ./...
 task test
 task test-race
+task coverage-check
 ```
 
 - 템플릿 또는 생성 로직을 변경하면 `task smoke`도 통과해야 한다.
-- 릴리스는 `ppm.json`의 `bin_name`과 일치하는 플랫폼별 아카이브 및 SHA-256 체크섬을 제공한다.
+- 릴리스는 `ppm.json`의 `bin_name`과 일치하는 플랫폼별 아카이브 및 SHA-256 체크섬을 제공하고,
+  빌드 provenance를 함께 게시한다. 릴리스 파이프라인은 태그 커밋에서 테스트를 먼저 통과시킨다.
 
-## 10. 주의사항
+## 10. CLI 계약 (바꾸기 전에 확인)
+
+- **출력 스트림**: 결과는 stdout, 진행·경고·오류·프로파일은 stderr. 새 메시지를 추가할 때 이 규칙을 지킨다.
+- **종료 코드**: 0 성공 / 1 일반 / 2 사용법·검증 / 3 충돌 / 4 외부 도구 / 5 입력 필요.
+  새 오류는 `generator`의 타입화된 오류(`UsageError`, `ConflictError`, `ExternalError`)로 표현한다.
+- **파괴적 작업**: 덮어쓰기는 TTY에서 확인을 받고, 비TTY에서는 `--force`/`--yes`가 없으면 실패한다.
+  프롬프트는 `Env.canPrompt()`(TTY + `--no-input` 아님)일 때만 띄우며 `rich.FConfirm`으로 stderr/stdin을 쓴다.
+- **기계 판독 출력**: `--format plain|json`은 항상 stdout에만 쓴다. JSON 스키마를 바꾸면 README를 갱신한다.
+- **호환성**: 플래그와 서브커맨드는 additive하게 유지한다. 제거·개명 시 deprecation 경고를 먼저 넣는다.
+
+## 11. 주의사항
 
 - **`smoke` 테스트는 느리다**: 네트워크로 의존성을 받고 `go build`를 수행한다.
   템플릿/생성 로직을 바꿀 때만 실행하고, 매 커밋마다 돌리지 않는다.
 - **sqlite 케이스**: `CGO_ENABLED=0`, `gcc` 미설치, windows 환경에서는
   스모크 테스트가 `t.Skip`으로 건너뛴다. (의도된 동작)
 - **`fyne` 템플릿**: GUI 빌드에 시스템 헤더(X11/OpenGL)가 필요해 스모크 매트릭스에서 제외.
-- **`super_cli/`**: 생성된 예제 산출물이므로 직접 수정하지 않는다.
 - **`templates/`의 `.tmpl` 파일**: Go `text/template` 문법. 수정 시
   `task smoke`로 생성 결과가 컴파일되는지 반드시 확인한다.
+- **전역 상태**: `rich.NoColor`는 루트의 `--no-color`에서 설정된다. 테스트에서 바꿨다면 `t.Cleanup`으로 복원한다.
 
 ---
 
-## 11. 작업 시작 시 체크리스트
+## 12. 작업 시작 시 체크리스트
 
 1. `git status`로 작업 트리 상태 확인.
 2. `task test`로 현재 테스트가 모두 통과하는지 확인 (Green 기준점).
 3. 변경할 기능/버그를 테스트로 먼저 표현 (Red).
 4. 최소 구현 (Green) → 리팩터링 (Refactor).
-5. `task test` + `task smoke`(필요 시) 통과 후 커밋.
+5. `task test` + `task coverage-check`(+ 필요 시 `task smoke`) 통과 후 커밋.
