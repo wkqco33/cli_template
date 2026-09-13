@@ -71,6 +71,21 @@ jobs:
           tar -xzf "dist/wtemp_linux_amd64.tar.gz" -C /tmp
           /tmp/wtemp_linux_amd64 --version | grep -Fx "$GITHUB_REF_NAME"
 
+      - name: Compose release notes
+        env:
+          NOTES_PATH: ${{ runner.temp }}/release-notes.md
+        run: |
+          set -euo pipefail
+          prev=$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)
+          {
+            git tag -l --format='%(contents)' "$GITHUB_REF_NAME"
+            echo
+            if [ -n "$prev" ]; then
+              echo "**Full Changelog**: https://github.com/${GITHUB_REPOSITORY}/compare/${prev}...${GITHUB_REF_NAME}"
+            fi
+          } > "$NOTES_PATH"
+          cat "$NOTES_PATH"
+
       - name: Create SHA-256 checksums
         working-directory: dist
         run: |
@@ -88,4 +103,4 @@ jobs:
         uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
         with:
           files: dist/*
-          generate_release_notes: true
+          body_path: ${{ runner.temp }}/release-notes.md
