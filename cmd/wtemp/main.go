@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"runtime/debug"
 
 	"github.com/wkqco33/cli_template/generator"
 	"github.com/wkqco33/cli_template/internal/cli"
@@ -13,6 +14,27 @@ import (
 
 // version 릴리스 시 -ldflags "-X main.version=v1.2.3"로 주입한다.
 var version = "dev"
+
+// resolveVersion -X로 주입된 버전이 없으면 모듈 버전을 시도한다.
+// `go install .../cmd/wtemp@v1.2.3`처럼 소스에서 빌드한 바이너리도 실제 버전을 보고한다.
+func resolveVersion() string {
+	moduleVersion := ""
+	if info, ok := debug.ReadBuildInfo(); ok {
+		moduleVersion = info.Main.Version
+	}
+	return pickVersion(version, moduleVersion)
+}
+
+// pickVersion 주입된 버전 → 모듈 버전 → 기본값 순으로 선택한다.
+func pickVersion(injected, moduleVersion string) string {
+	if injected != "dev" {
+		return injected
+	}
+	if moduleVersion != "" && moduleVersion != "(devel)" {
+		return moduleVersion
+	}
+	return injected
+}
 
 // 종료 코드. README의 "종료 코드" 표와 함께 유지한다.
 const (
@@ -71,7 +93,7 @@ func newRootCmd(env *cli.Env) *wcli.Command {
 		Use:           "wtemp",
 		Short:         "wcli 기반 Go CLI 프로젝트 템플릿 생성기",
 		Long:          rootLong,
-		Version:       version,
+		Version:       resolveVersion(),
 		OutWriter:     env.Stdout,
 		ErrWriter:     env.Stderr,
 		SilenceErrors: true,

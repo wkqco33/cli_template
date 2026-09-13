@@ -6,6 +6,13 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- `go install github.com/wkqco33/cli_template/cmd/wtemp@vX.Y.Z`로 설치한 바이너리의
+  `--version`이 `dev`로 표시되던 문제 (빌드 정보의 모듈 버전으로 폴백)
+
+## [0.3.0] - 2026-09-13
+
 ### Added
 
 - 전역 플래그: `--no-color`, `--no-input`, `-q/--quiet`, `-d/--debug`, `-y/--yes`

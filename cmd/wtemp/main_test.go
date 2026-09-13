@@ -16,6 +16,39 @@ import (
 	"github.com/wkqco33/wcli/rich"
 )
 
+// TestPickVersion_VersionResolution 주입 버전 → 모듈 버전 → 기본값 순으로 선택한다.
+func TestPickVersion_VersionResolution(t *testing.T) {
+	tests := []struct {
+		name          string
+		injected      string
+		moduleVersion string
+		want          string
+	}{
+		{name: "ldflags-wins", injected: "v1.2.3", moduleVersion: "v0.3.1", want: "v1.2.3"},
+		{name: "ldflags-over-devel", injected: "v1.2.3", moduleVersion: "(devel)", want: "v1.2.3"},
+		{name: "module-version-fallback", injected: "dev", moduleVersion: "v0.3.1", want: "v0.3.1"},
+		{name: "devel-stays-dev", injected: "dev", moduleVersion: "(devel)", want: "dev"},
+		{name: "empty-stays-dev", injected: "dev", moduleVersion: "", want: "dev"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := pickVersion(tc.injected, tc.moduleVersion); got != tc.want {
+				t.Fatalf("pickVersion(%q, %q) = %q, want %q", tc.injected, tc.moduleVersion, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestResolveVersion_InjectedWins 주입된 값이 있으면 빌드 정보와 무관하게 그 값을 쓴다.
+func TestResolveVersion_InjectedWins(t *testing.T) {
+	setVersion(t, "v9.9.9")
+
+	if got := resolveVersion(); got != "v9.9.9" {
+		t.Fatalf("expected %q, got %q", "v9.9.9", got)
+	}
+}
+
 // TestExitCode_Mapping 오류 타입이 문서화된 종료 코드로 매핑되는지 검증한다.
 func TestExitCode_Mapping(t *testing.T) {
 	tests := []struct {
