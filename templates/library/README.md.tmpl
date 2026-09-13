@@ -5,13 +5,16 @@ Go 라이브러리 템플릿.
 ## 설치
 
 ```bash
-go get github.com/{{.ModuleName}}
+go get {{.ModuleName}}
 ```
+
+> 모듈 경로가 프로젝트 이름과 같다면 배포 전에 전체 경로로 다시 생성하세요.
+> 예: `wtemp new {{.ProjectName}} -t library --module github.com/<user>/{{.ProjectName}}`
 
 ## 사용 예시
 
 ```go
-import lib "github.com/{{.ModuleName}}"
+import lib "{{.ModuleName}}"
 
 msg := lib.Hello("Go")
 fmt.Println(msg) // Hello, Go!

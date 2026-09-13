@@ -3,7 +3,7 @@ package generator
 import (
 	"testing"
 
-	"cli_template/templates"
+	"github.com/wkqco33/cli_template/templates"
 )
 
 func TestTemplates_CatalogMatchesEmbedFS(t *testing.T) {

@@ -6,8 +6,12 @@ import (
 	"{{.ModuleName}}/cmd"
 )
 
+// version 릴리스 시 -ldflags "-X main.version=v1.2.3"로 주입한다.
+var version = "dev"
+
 func main() {
 	root := cmd.Root()
+	root.Version = version
 
 	if err := root.Execute(os.Args[1:]); err != nil {
 		os.Exit(1)

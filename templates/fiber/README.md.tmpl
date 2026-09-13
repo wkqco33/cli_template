@@ -5,8 +5,14 @@ wcli + Fiber 기반 Go 웹서버 템플릿.
 ## 빌드
 
 ```bash
+# 개발 빌드
 go build -o {{.ProjectName}} .
+
+# 릴리스 빌드 (버전을 바이너리에 주입)
+go build -trimpath -ldflags "-X main.version=v1.0.0" -o {{.ProjectName}} .
 ```
+
+`--version`은 주입한 `main.version` 값을 그대로 출력한다.
 
 ## 실행 예시
 

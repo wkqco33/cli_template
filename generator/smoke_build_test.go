@@ -14,6 +14,7 @@ func TestSmokeGeneratedTemplatesBuild(t *testing.T) {
 	cases := []struct {
 		name       string
 		template   string
+		moduleName string
 		sqlite     bool
 		requireCGO bool
 		requireGCC bool
@@ -21,11 +22,13 @@ func TestSmokeGeneratedTemplatesBuild(t *testing.T) {
 		{name: "minimal-default", template: "minimal"},
 		{name: "minimal-sqlite", template: "minimal", sqlite: true, requireCGO: true, requireGCC: true},
 		{name: "full-default", template: "full"},
+		{name: "full-module-path", template: "full", moduleName: "github.com/wkqco33/smoke-full"},
 		{name: "full-sqlite", template: "full", sqlite: true, requireCGO: true, requireGCC: true},
 		{name: "gin-default", template: "gin"},
 		{name: "fiber-default", template: "fiber"},
 		{name: "echo-default", template: "echo"},
 		{name: "library-default", template: "library"},
+		{name: "library-module-path", template: "library", moduleName: "github.com/wkqco33/smoke-lib"},
 	}
 
 	for _, tc := range cases {
@@ -58,8 +61,8 @@ func TestSmokeGeneratedTemplatesBuild(t *testing.T) {
 				_ = os.Chdir(prevDir)
 			})
 
-			if err := Generate(projectName, Options{Template: tc.template, SQLite: tc.sqlite}); err != nil {
-				t.Fatalf("생성 실패 (template=%s sqlite=%v): %v", tc.template, tc.sqlite, err)
+			if err := Generate(projectName, Options{Template: tc.template, SQLite: tc.sqlite, ModuleName: tc.moduleName}); err != nil {
+				t.Fatalf("생성 실패 (template=%s sqlite=%v module=%s): %v", tc.template, tc.sqlite, tc.moduleName, err)
 			}
 
 			targetPath := filepath.Join(tmpRoot, projectName)
