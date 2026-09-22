@@ -58,15 +58,9 @@ func AICmd(env *Env) *wcli.Command {
 			}
 			planner := ai.NewPlanner(client, cfg.AI.Model)
 			env.progress("[cyan]AI 요청 중...[/cyan]")
-			plan, err := planner.Plan(ctx, ctx.Args[0])
+			plan, err := planner.PlanWithOverrides(ctx, ctx.Args[0], name, module)
 			if err != nil {
 				return &generator.ExternalError{Tool: "AI provider", Err: err}
-			}
-			if name != "" {
-				plan.ProjectName = name
-			}
-			if module != "" {
-				plan.ModuleName = module
 			}
 			if sqlite {
 				plan.SQLite = true

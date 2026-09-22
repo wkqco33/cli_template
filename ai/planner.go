@@ -24,6 +24,16 @@ func NewPlanner(client CompletionClient, model string) *Planner {
 }
 
 func (p *Planner) Plan(ctx context.Context, request string) (Plan, error) {
+	return p.plan(ctx, request, "", "")
+}
+
+// PlanWithOverrides applies explicit CLI values before validating the model
+// response. This allows callers to supply values that the model could not infer.
+func (p *Planner) PlanWithOverrides(ctx context.Context, request, projectName, moduleName string) (Plan, error) {
+	return p.plan(ctx, request, projectName, moduleName)
+}
+
+func (p *Planner) plan(ctx context.Context, request, projectName, moduleName string) (Plan, error) {
 	if strings.TrimSpace(request) == "" {
 		return Plan{}, fmt.Errorf("AI 요청이 비어 있습니다")
 	}
@@ -54,6 +64,12 @@ func (p *Planner) Plan(ctx context.Context, request string) (Plan, error) {
 	content := normalizeJSONContent(response.Choices[0].Message.Content)
 	if err := json.Unmarshal([]byte(content), &plan); err != nil {
 		return Plan{}, fmt.Errorf("AI 계획 JSON 파싱 실패: %w", err)
+	}
+	if projectName != "" {
+		plan.ProjectName = projectName
+	}
+	if moduleName != "" {
+		plan.ModuleName = moduleName
 	}
 	if err := ValidatePlan(plan); err != nil {
 		return Plan{}, fmt.Errorf("AI 계획 검증 실패: %w", err)

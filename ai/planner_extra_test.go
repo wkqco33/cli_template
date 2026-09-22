@@ -21,6 +21,17 @@ func TestPlanner_ParsesMarkdownJSON(t *testing.T) {
 	}
 }
 
+func TestPlanner_ExplicitOverridesFillMissingNames(t *testing.T) {
+	client := &fakeClient{response: &llm.ChatResponse{Choices: []llm.Choice{{Message: llm.Message{Content: `{"project_name":"","module_name":"","template":"full","sqlite":false,"summary":"CLI app"}`}}}}}
+	plan, err := NewPlanner(client, "model").PlanWithOverrides(context.Background(), "CLI app", "testcli", "github.com/example/testcli")
+	if err != nil {
+		t.Fatalf("expected overrides to complete plan: %v", err)
+	}
+	if plan.ProjectName != "testcli" || plan.ModuleName != "github.com/example/testcli" {
+		t.Fatalf("unexpected plan: %+v", plan)
+	}
+}
+
 func TestPlanner_Errors(t *testing.T) {
 	for name, client := range map[string]CompletionClient{
 		"client error": &fakeClient{err: errors.New("network")},
