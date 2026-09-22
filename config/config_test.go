@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -74,10 +75,12 @@ func TestSaveAndLoad_AtomicConfig(t *testing.T) {
 	if _, err := os.Stat(path + ".tmp"); !os.IsNotExist(err) {
 		t.Fatalf("temporary config should be removed, stat error: %v", err)
 	}
-	if info, err := os.Stat(path); err != nil {
-		t.Fatalf("stat config failed: %v", err)
-	} else if info.Mode().Perm() != 0o600 {
-		t.Fatalf("expected config permissions 0600, got %o", info.Mode().Perm())
+	if runtime.GOOS != "windows" {
+		if info, err := os.Stat(path); err != nil {
+			t.Fatalf("stat config failed: %v", err)
+		} else if info.Mode().Perm() != 0o600 {
+			t.Fatalf("expected config permissions 0600, got %o", info.Mode().Perm())
+		}
 	}
 }
 

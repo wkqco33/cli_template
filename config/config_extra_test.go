@@ -1,6 +1,10 @@
 package config
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
 
 func TestSet_AllSupportedKeys(t *testing.T) {
 	cases := []struct{ key, value string }{
@@ -67,5 +71,20 @@ func TestNormalize_ProviderDefaults(t *testing.T) {
 	Normalize(&cfg)
 	if cfg.AI.BaseURL != defaultOllamaURL {
 		t.Fatalf("expected Ollama URL, got %q", cfg.AI.BaseURL)
+	}
+}
+
+func TestLoadAndSave_RejectInvalidVersion(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	if err := os.WriteFile(path, []byte("version: 99\n"), 0o600); err != nil {
+		t.Fatalf("write config failed: %v", err)
+	}
+	if _, err := Load(path); err == nil {
+		t.Fatal("expected unsupported version error")
+	}
+	cfg := Defaults()
+	cfg.Version = 99
+	if err := Save(path, cfg); err == nil {
+		t.Fatal("expected Save validation error")
 	}
 }

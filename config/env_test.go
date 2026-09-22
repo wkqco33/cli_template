@@ -18,3 +18,13 @@ func TestApplyEnv_OverridesProviderAndModel(t *testing.T) {
 		t.Fatalf("unexpected environment config: %+v", cfg.AI)
 	}
 }
+
+func TestApplyEnv_AzureKey(t *testing.T) {
+	t.Setenv("AZURE_OPENAI_API_KEY", "azure-secret")
+	cfg := Defaults()
+	cfg.AI.Provider = "azure"
+	ApplyEnv(&cfg)
+	if cfg.AI.APIKey != "azure-secret" {
+		t.Fatalf("expected Azure key, got %q", cfg.AI.APIKey)
+	}
+}
