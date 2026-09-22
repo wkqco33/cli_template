@@ -51,7 +51,8 @@ func (p *Planner) Plan(ctx context.Context, request string) (Plan, error) {
 		return Plan{}, fmt.Errorf("AI 응답에 선택 결과가 없습니다")
 	}
 	var plan Plan
-	if err := json.Unmarshal([]byte(response.Choices[0].Message.Content), &plan); err != nil {
+	content := normalizeJSONContent(response.Choices[0].Message.Content)
+	if err := json.Unmarshal([]byte(content), &plan); err != nil {
 		return Plan{}, fmt.Errorf("AI 계획 JSON 파싱 실패: %w", err)
 	}
 	if err := ValidatePlan(plan); err != nil {
@@ -97,3 +98,24 @@ func templateNames() []string {
 }
 
 func floatPtr(v float64) *float64 { return &v }
+
+// normalizeJSONContent accepts the JSON-only response requested by the prompt,
+// while tolerating common model formatting such as ```json fences or a short
+// explanatory sentence around the object.
+func normalizeJSONContent(content string) string {
+	content = strings.TrimSpace(content)
+	if strings.HasPrefix(content, "```") {
+		if newline := strings.IndexByte(content, '\n'); newline >= 0 {
+			content = content[newline+1:]
+		}
+		content = strings.TrimSpace(content)
+		content = strings.TrimSuffix(content, "```")
+		content = strings.TrimSpace(content)
+	}
+	start := strings.IndexByte(content, '{')
+	end := strings.LastIndexByte(content, '}')
+	if start >= 0 && end > start {
+		return content[start : end+1]
+	}
+	return content
+}

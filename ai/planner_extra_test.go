@@ -9,6 +9,18 @@ import (
 	"github.com/wkqco33/cli_template/config"
 )
 
+func TestPlanner_ParsesMarkdownJSON(t *testing.T) {
+	content := "```json\n{\"project_name\":\"todo-api\",\"module_name\":\"github.com/example/todo-api\",\"template\":\"full\",\"sqlite\":false,\"summary\":\"CLI app\"}\n```"
+	client := &fakeClient{response: &llm.ChatResponse{Choices: []llm.Choice{{Message: llm.Message{Content: content}}}}}
+	plan, err := NewPlanner(client, "model").Plan(context.Background(), "CLI app")
+	if err != nil {
+		t.Fatalf("expected fenced JSON to parse: %v", err)
+	}
+	if plan.Template != "full" {
+		t.Fatalf("expected full template, got %q", plan.Template)
+	}
+}
+
 func TestPlanner_Errors(t *testing.T) {
 	for name, client := range map[string]CompletionClient{
 		"client error": &fakeClient{err: errors.New("network")},
