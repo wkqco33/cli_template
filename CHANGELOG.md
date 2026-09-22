@@ -6,6 +6,17 @@
 
 ## [Unreleased]
 
+### Added
+
+- 자연어 요청으로 기존 Go 템플릿을 선택·생성하는 `wtemp ai` 명령
+- Ollama 기본 provider 및 OpenAI, OpenAI-compatible, Azure provider 지원
+- 플랫폼별 YAML 설정 파일과 `config init|path|show|set|unset|validate` 명령
+- `LLM_client_go` 기반 구조화된 AI 생성 계획 검증
+
+### Changed
+
+- 프로젝트 및 템플릿의 Go 버전을 1.26.6으로 상향
+
 ## [0.3.1] - 2026-09-13
 
 ### Fixed
