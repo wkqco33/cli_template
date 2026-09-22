@@ -12,12 +12,13 @@ type Env struct {
 	Stdout      io.Writer
 	Stderr      io.Writer
 	Stdin       io.Reader
-	Interactive bool // stdin이 터미널이라 확인 프롬프트를 띄울 수 있음
-	Quiet       bool // 진행 메시지 억제
-	Debug       bool // 추가 진단 메시지
-	NoInput     bool // 대화형 입력 금지
-	Yes         bool // 확인 프롬프트에 자동 yes
-	NoColor     bool // 색상 출력 금지
+	Interactive bool   // stdin이 터미널이라 확인 프롬프트를 띄울 수 있음
+	Quiet       bool   // 진행 메시지 억제
+	Debug       bool   // 추가 진단 메시지
+	NoInput     bool   // 대화형 입력 금지
+	Yes         bool   // 확인 프롬프트에 자동 yes
+	NoColor     bool   // 색상 출력 금지
+	ConfigPath  string // 설정 파일 경로 오버라이드
 }
 
 // NewEnv 기본값을 채운 실행 환경을 만든다.

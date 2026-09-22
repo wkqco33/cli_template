@@ -58,6 +58,8 @@ const rootLong = `wcli 기반 Go CLI 프로젝트 템플릿 생성기.
   wtemp new my-app
   wtemp new my-app -t minimal --module github.com/user/my-app
   wtemp new my-app --dry-run --format json
+  wtemp ai "Gin 기반 SQLite TODO API"
+  wtemp config init
 
 종료 코드:
   0  성공
@@ -105,6 +107,7 @@ func newRootCmd(env *cli.Env) *wcli.Command {
 	flags.BoolVar(&env.Quiet, "quiet", "q", false, "진행 메시지 억제 (결과·오류는 유지)")
 	flags.BoolVar(&env.Debug, "debug", "d", false, "추가 진단 메시지 출력")
 	flags.BoolVar(&env.Yes, "yes", "y", false, "확인 프롬프트에 자동으로 yes")
+	flags.StringVar(&env.ConfigPath, "config", "", "", "설정 파일 경로")
 
 	root.PersistentPreRun = func(ctx *wcli.Context) error {
 		if env.NoColor {
@@ -128,6 +131,8 @@ func newRootCmd(env *cli.Env) *wcli.Command {
 	root.AddCommand(
 		cli.NewCmd(env),
 		cli.ListCmd(env),
+		cli.AICmd(env),
+		cli.ConfigCmd(env),
 		wcli.NewCompletionCommand(root),
 	)
 

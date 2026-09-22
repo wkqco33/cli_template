@@ -113,6 +113,7 @@ wtemp new <project-name> -t library --profile
 | `--no-input` | | 전역 | 대화형 입력 금지 (프롬프트가 필요하면 종료 코드 5로 실패) |
 | `--quiet` | `-q` | 전역 | 진행 메시지 억제 (결과·오류는 유지) |
 | `--debug` | `-d` | 전역 | 추가 진단 메시지 출력 |
+| `--config` | | 전역 | 설정 파일 경로 |
 | `--yes` | `-y` | 전역 | 확인 프롬프트에 자동으로 yes |
 | `--help` | `-h` | 전역 | 도움말 |
 | `--version` | | 전역 | 버전 출력 |
@@ -164,6 +165,41 @@ wtemp new myapp --dry-run | while read -r f; do echo "check $f"; done
 - `library` — Go 라이브러리 스켈레톤
 
 `--format json`은 이름·설명에 더해 해당 템플릿의 `--sqlite` 지원 여부(`sqlite`)를 함께 출력한다.
+
+## AI 기반 생성
+
+기본 provider는 로컬 Ollama입니다. 먼저 Ollama가 실행 중이고 모델이 설치되어 있는지 확인하세요.
+
+```bash
+ollama pull llama3.1
+wtemp ai "Gin 기반 SQLite TODO REST API"
+```
+
+AI 설정은 플랫폼별 기본 설정 경로에 저장합니다.
+
+```bash
+wtemp config init
+wtemp config path
+wtemp config show
+wtemp config set ai.model llama3.1
+wtemp config set ai.provider ollama
+```
+
+설정 파일은 YAML 형식이며 기본 경로는 운영체제별 사용자 설정 디렉터리의
+`wtemp/config.yaml`입니다. `--config` 또는 `WTEMP_CONFIG`로 경로를 바꿀 수 있습니다.
+
+지원 provider는 `ollama`, `openai`, `openai-compatible`, `azure`입니다.
+API 키를 사용하는 provider의 키는 `config show`에서 마스킹됩니다.
+
+```bash
+wtemp config set ai.provider openai
+wtemp config set ai.model gpt-4o-mini
+wtemp config set ai.api_key "$OPENAI_API_KEY"
+wtemp ai "작은 Go CLI 도구" --dry-run
+```
+
+`wtemp ai`는 자연어 요청을 기존 템플릿 선택 계획으로 변환하고, 실제 파일 생성은
+기존 generator의 검증 및 원자적 생성 경로를 사용합니다.
 
 ## `--sqlite` 옵션
 
