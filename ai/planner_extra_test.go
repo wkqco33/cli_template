@@ -30,6 +30,15 @@ func TestPlanner_ExplicitOverridesFillMissingNames(t *testing.T) {
 	if plan.ProjectName != "testcli" || plan.ModuleName != "github.com/example/testcli" {
 		t.Fatalf("unexpected plan: %+v", plan)
 	}
+
+	client.response.Choices[0].Message.Content = `{"project_name":"","module_name":"","template":"full","sqlite":false,"summary":"CLI app"}`
+	plan, err = NewPlanner(client, "model").PlanWithOverrides(context.Background(), "CLI app", "my-tool", "")
+	if err != nil {
+		t.Fatalf("expected project name to provide module default: %v", err)
+	}
+	if plan.ModuleName != "my-tool" {
+		t.Fatalf("expected module default %q, got %q", "my-tool", plan.ModuleName)
+	}
 }
 
 func TestPlanner_Errors(t *testing.T) {

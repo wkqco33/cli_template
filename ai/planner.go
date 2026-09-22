@@ -71,6 +71,11 @@ func (p *Planner) plan(ctx context.Context, request, projectName, moduleName str
 	if moduleName != "" {
 		plan.ModuleName = moduleName
 	}
+	// Match `wtemp new`: when the caller supplies only a project name,
+	// the project name is also the default Go module path.
+	if plan.ModuleName == "" && plan.ProjectName != "" {
+		plan.ModuleName = plan.ProjectName
+	}
 	if err := ValidatePlan(plan); err != nil {
 		return Plan{}, fmt.Errorf("AI 계획 검증 실패: %w", err)
 	}
